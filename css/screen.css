@@ -1,0 +1,57 @@
+* {
+        margin: 0;
+        padding: 0;
+}
+html, body {
+        color: black;
+	background-color: grey;
+        height: 100%;
+}
+div, input {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+div.outer {
+	font-size: 16pt;
+	height: 100%;
+	position: relative;
+	width: 100%;
+}
+div.channels {
+	background-color: lightgrey;
+	float:left;
+	height: 100%;
+	width: 33%;
+}
+div.channel {
+	margin-top: 0.2em;
+	margin-left: 0.5em;
+	margin-bottom: 2em;
+	overflow-y: auto;
+	height: 90%;
+}
+div.chat {
+	background-color: white;
+	position: relative;
+	float: right;
+	height: 100%;
+	width: 67%;
+}
+div.title {
+	background-color: lightgrey;
+	width: 100%;
+}
+div.command {
+	background-color: black;
+	bottom: 0;
+	position: absolute;
+	width: 100%;
+}
+#usercmd {
+	border: 1;
+	bottom: 0;
+	font-size: 16pt;
+	position: absolute;
+	width: 100%;
+}
