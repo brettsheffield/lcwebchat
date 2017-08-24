@@ -33,6 +33,7 @@ var nick = "guest";
 var cmdHistory = [];
 var cmdIndex = -1;
 var cmdCurrent = "";
+var allowedRemoteCmds = [ 'topic' ];
 
 function init() {
 	console.log("init()");
@@ -179,14 +180,17 @@ function cmd_topic(args) {
 function handleCmd(cmd, isRemote) {
 	if (cmd.substring(0,1) != '/')
 		return false;
+	var args = cmd.split(' ');
+	var command = args[0].substring(1);
 	if (chanselected) {
-		if (!isRemote) {
+		if (!isRemote && allowedRemoteCmds.includes(command)) {
 			chanselected.send(cmd);
 			return true;
 		}
 	}
-	var args = cmd.split(' ');
-	var command = args[0].substring(1);
+	if (isRemote && !allowedRemoteCmds.includes(command)) {
+		console.log("bad remote command received: " + command);
+	}
 	switch (command) {
 	case "help":
 		return cmd_help(args);
