@@ -138,7 +138,9 @@ function bound(cb) {
 
 function gotmail(obj, opcode, len, id, token, msg) {
 	console.log("gotmail: " + msg );
-	writeMsg(msg);
+	if (!handleCmd(msg, true)) {
+		writeMsg(msg);
+	}
 }
 
 function cmd_help(args) {
@@ -174,10 +176,15 @@ function cmd_topic(args) {
 }
 
 /* process any /cmd irc-like commands */
-function handleCmd(cmd) {
+function handleCmd(cmd, isRemote) {
 	if (cmd.substring(0,1) != '/')
 		return false;
-
+	if (chanselected) {
+		if (!isRemote) {
+			chanselected.send(cmd);
+			return true;
+		}
+	}
 	var args = cmd.split(' ');
 	var command = args[0].substring(1);
 	switch (command) {
