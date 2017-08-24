@@ -22,21 +22,81 @@
 
 "use strict";
 
+const KEY_ENTER = 13;
+const KEY_DOWN = 40;
+const KEY_UP = 38;
+const CMD_HISTORY_LIMIT=32;
+
 var lctx;
 var chanselected;
 var nick = "guest";
+var cmdHistory = [];
+var cmdIndex = -1;
+var cmdCurrent = "";
 
 function init() {
 	console.log("init()");
 	lctx = new Librecast(ready);
 	handleCmd("/topic no topic set");
 	$("#usercmd").keypress(function(e) {
-			if (e.which == 13) {
+		if (e.which == KEY_ENTER) {
+			e.preventDefault();
+			handleInput();
+		}
+	});
+	$("#usercmd").keydown(function(e) {
+		switch (e.which) {
+			case KEY_UP:
+				console.log("UP");
 				e.preventDefault();
-				handleInput();
-			}
+				cmdHistoryGet(cmdIndex + 1);
+				break;
+			case KEY_DOWN:
+				console.log("DOWN");
+				e.preventDefault();
+				cmdHistoryGet(cmdIndex - 1);
+				break;
+		}
 	});
 	$("#usercmd").focus();
+}
+
+function cmdGet() {
+	return $("#usercmd").val();
+}
+
+function cmdSet(command) {
+	$("#usercmd").val(command);
+}
+
+function cmdHistoryGet(index) {
+	console.log("cmdHistoryGet(" + index + ")");
+
+	if (index > cmdHistory.length) {
+		index = cmdHistory.length;
+	}
+	else if (index < 0) {
+		console.log("restoring current command");
+		cmdSet(cmdCurrent);
+		cmdIndex = -1;
+		return;
+	}
+	else if (index == 0 && cmdIndex == -1) {
+		console.log("stashing command history");
+		cmdCurrent = cmdGet();
+	}
+	if (typeof cmdHistory[index] !== "undefined") {
+		console.log("getting cmdHistory");
+		cmdSet(cmdHistory[index]);
+		cmdIndex = index;
+	}
+}
+
+function cmdHistorySet(cmd) {
+	console.log("cmdHistorySet(" + cmd + ")");
+	cmdHistory.unshift(cmd);
+	if (cmdHistory.length > CMD_HISTORY_LIMIT)
+		cmdHistory.pop();
 }
 
 function ready() {
@@ -135,14 +195,17 @@ function handleCmd(cmd) {
 }
 
 function handleInput() {
-	var cmd = $("#usercmd").val();
+	var cmd = cmdGet();
+	cmdHistorySet(cmd);
 	if (chanselected) {
 		if (!handleCmd(cmd)) {
 			console.log("sending " + cmd);
 			chanselected.send('&lt;' + nick + "&gt;  " + cmd);
 		}
 	}
-	$("#usercmd").val("");
+	cmdSet("");
+	cmdIndex = -1;
+	cmdCurrent = "";
 }
 
 function writeMsg(str) {
