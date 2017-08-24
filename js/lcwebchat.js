@@ -179,11 +179,12 @@ function cmd_sysmsg(args) {
 	return true;
 }
 
-function cmd_topic(args) {
+function cmd_topic(args, isRemote) {
 	args.shift();
 	var topic = args.join(" ");
 	$("div.topic").html("<h1>" + topic + "<h1>");
-	writeSysMsg('channel topic changed to "' + topic + '"');
+	if (isRemote)
+		writeSysMsg('channel topic changed to "' + topic + '"');
 	return true;
 }
 
@@ -214,7 +215,7 @@ function handleCmd(cmd, isRemote) {
 	case "sysmsg":
 		return cmd_sysmsg(args);
 	case "topic":
-		return cmd_topic(args);
+		return cmd_topic(args, isRemote);
 	}
 
 	return true; /* do not write failed commands to channel */
