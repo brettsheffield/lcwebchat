@@ -55,3 +55,22 @@ div.command {
 	position: absolute;
 	width: 100%;
 }
+
+span.nick {
+	font-family: monospace;
+	font-size: 90%;
+}
+span.msg {
+	margin-left: 0.1em;
+}
+span.datestamp {
+	display: none; /* hidden by default */
+	font-family: monospace;
+	font-size: 90%;
+	margin-right: 0.1em;
+}
+span.timestamp {
+	font-family: monospace;
+	font-size: 90%;
+	margin-right: 0.1em;
+}
