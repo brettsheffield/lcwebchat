@@ -74,3 +74,8 @@ span.timestamp {
 	font-size: 90%;
 	margin-right: 0.1em;
 }
+span.sysmsg {
+	font-family: monospace;
+	font-size: 90%;
+	color: darkgrey;
+}

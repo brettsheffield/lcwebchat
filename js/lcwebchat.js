@@ -74,21 +74,55 @@ function bound(cb) {
 
 function gotmail(obj, opcode, len, id, token, msg) {
 	console.log("gotmail: " + msg );
-	writeThis(msg);
+	writeMsg(msg);
+}
+
+function cmd_help(args) {
+	writeSysMsg("/help");
+	writeSysMsg("  commands: ");
+	writeSysMsg("  /help                       - displays this help message");
+	writeSysMsg("  /nick nickname              - changes your channel nick");
+	writeSysMsg("");
+	return true;
+}
+
+function cmd_nick(args) {
+	var newnick = args[1];
+	writeSysMsg(nick + ' is now known as ' + newnick);
+	nick = newnick;
+	return true;
+}
+
+/* process any /cmd irc-like commands */
+function handleCmd(cmd) {
+	if (cmd.substring(0,1) != '/')
+		return false;
+
+	var args = cmd.split(' ');
+	var command = args[0].substring(1);
+	switch (command) {
+	case "help":
+		return cmd_help(args);
+	case "nick":
+		return cmd_nick(args);
+	}
+
+	return true; /* do not write failed commands to channel */
 }
 
 function handleInput() {
 	var cmd = $("#usercmd").val();
 	if (chanselected) {
-		console.log("sending " + cmd);
-		$("#usercmd").val("");
-		chanselected.send(cmd);
+		if (!handleCmd(cmd)) {
+			console.log("sending " + cmd);
+			chanselected.send(cmd);
+		}
 	}
+	$("#usercmd").val("");
 }
 
-function writeThis(str) {
+function writeMsg(str) {
 	/* formatting is mostly CSS, but also use a non-breaking space so cut and paste is legible */
-	var chanpane = $("div.channel");
 	var msg = '<span class="msg">' + str + '</span>';
 	var d = new Date();
 	var month = new String("0" + (d.getMonth() + 1)).slice(-2);
@@ -100,7 +134,17 @@ function writeThis(str) {
 	var time = '<span class="timestamp">' + hours + ':' + minutes + ':' + seconds + '&nbsp;</span>';
 	var user = '<span class="nick">&lt;' + nick + '&gt;&nbsp;</span>';
 	var line = '<p>' + date + time + user + msg + '</p>';
-	chanpane.append(line);
+	writeChannel(line);
+}
+
+function writeSysMsg(str) {
+	var sysmsg = '<pre><span class="sysmsg">' + str + '</span></pre>';
+	writeChannel(sysmsg);
+}
+
+function writeChannel(str) {
+	var chanpane = $("div.channel");
+	chanpane.append(str);
 	chanpane.scrollTop(chanpane.prop("scrollHeight") - chanpane.prop("clientHeight"));
 }
 
