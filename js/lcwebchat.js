@@ -41,9 +41,13 @@ function init() {
 
 function ready() {
 	console.log("ready()");
+	changeChannel("chatx");
+}
+
+function changeChannel(channelName) {
 	var disarray = [];
 	var sock = new LibrecastSocket(lctx, sockready);
-	var chan = new LibrecastChannel(lctx, "chatx", chanready);
+	var chan = new LibrecastChannel(lctx, channelName, chanready);
 	disarray.push(sock.defer);
 	disarray.push(chan.defer);
 
@@ -94,6 +98,13 @@ function cmd_nick(args) {
 	return true;
 }
 
+function cmd_join(args) {
+	var channel = args[1];
+	writeSysMsg('changing channels to "' + channel + '"');
+	changeChannel(channel);
+	return true;
+}
+
 function cmd_topic(args) {
 	args.shift();
 	var topic = args.join(" ");
@@ -112,6 +123,8 @@ function handleCmd(cmd) {
 	switch (command) {
 	case "help":
 		return cmd_help(args);
+	case "join":
+		return cmd_join(args);
 	case "nick":
 		return cmd_nick(args);
 	case "topic":
