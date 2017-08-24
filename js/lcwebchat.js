@@ -29,7 +29,7 @@ var nick = "guest";
 function init() {
 	console.log("init()");
 	lctx = new Librecast(ready);
-	$("div.title").html("<h1>Channel Title<h1>");
+	handleCmd("/topic no topic set");
 	$("#usercmd").keypress(function(e) {
 			if (e.which == 13) {
 				e.preventDefault();
@@ -82,6 +82,7 @@ function cmd_help(args) {
 	writeSysMsg("  commands: ");
 	writeSysMsg("  /help                       - displays this help message");
 	writeSysMsg("  /nick nickname              - changes your channel nick");
+	writeSysMsg("  /topic channel topic        - set channel topic");
 	writeSysMsg("");
 	return true;
 }
@@ -90,6 +91,14 @@ function cmd_nick(args) {
 	var newnick = args[1];
 	writeSysMsg(nick + ' is now known as ' + newnick);
 	nick = newnick;
+	return true;
+}
+
+function cmd_topic(args) {
+	args.shift();
+	var topic = args.join(" ");
+	$("div.topic").html("<h1>" + topic + "<h1>");
+	writeSysMsg('channel topic changed to "' + topic + '"');
 	return true;
 }
 
@@ -105,6 +114,8 @@ function handleCmd(cmd) {
 		return cmd_help(args);
 	case "nick":
 		return cmd_nick(args);
+	case "topic":
+		return cmd_topic(args);
 	}
 
 	return true; /* do not write failed commands to channel */
