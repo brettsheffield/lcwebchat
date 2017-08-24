@@ -115,7 +115,7 @@ function handleInput() {
 	if (chanselected) {
 		if (!handleCmd(cmd)) {
 			console.log("sending " + cmd);
-			chanselected.send(cmd);
+			chanselected.send('&lt;' + nick + "&gt;  " + cmd);
 		}
 	}
 	$("#usercmd").val("");
@@ -132,8 +132,8 @@ function writeMsg(str) {
 	var seconds = new String("0" + d.getSeconds()).slice(-2);
 	var date = '<span class="datestamp">' + d.getFullYear() + '-' + month + '-' + day + '&nbsp;</span>';
 	var time = '<span class="timestamp">' + hours + ':' + minutes + ':' + seconds + '&nbsp;</span>';
-	var user = '<span class="nick">&lt;' + nick + '&gt;&nbsp;</span>';
-	var line = '<p>' + date + time + user + msg + '</p>';
+	//var user = '<span class="nick">&lt;' + nick + '&gt;&nbsp;</span>';
+	var line = '<p>' + date + time + msg + '</p>';
 	writeChannel(line);
 }
 
