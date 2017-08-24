@@ -33,7 +33,7 @@ var nick = "guest";
 var cmdHistory = [];
 var cmdIndex = -1;
 var cmdCurrent = "";
-var allowedRemoteCmds = [ 'topic' ];
+var allowedRemoteCmds = [ 'sysmsg', 'topic' ];
 
 function init() {
 	console.log("init()");
@@ -156,8 +156,12 @@ function cmd_help(args) {
 
 function cmd_nick(args) {
 	var newnick = args[1];
-	writeSysMsg(nick + ' is now known as ' + newnick);
+
+	if (chanselected) {
+		chanselected.send('/sysmsg ' + nick + ' is now known as ' + newnick);
+	}
 	nick = newnick;
+
 	return true;
 }
 
@@ -165,6 +169,13 @@ function cmd_join(args) {
 	var channel = args[1];
 	writeSysMsg('changing channels to "' + channel + '"');
 	changeChannel(channel);
+	return true;
+}
+
+function cmd_sysmsg(args) {
+	args.shift();
+	var msg = args.join(" ");
+	writeSysMsg(msg);
 	return true;
 }
 
@@ -180,12 +191,14 @@ function cmd_topic(args) {
 function handleCmd(cmd, isRemote) {
 	if (cmd.substring(0,1) != '/')
 		return false;
+	
 	var args = cmd.split(' ');
 	var command = args[0].substring(1);
+
+	/* send remote command */
 	if (chanselected) {
 		if (!isRemote && allowedRemoteCmds.includes(command)) {
 			chanselected.send(cmd);
-			return true;
 		}
 	}
 	if (isRemote && !allowedRemoteCmds.includes(command)) {
@@ -198,6 +211,8 @@ function handleCmd(cmd, isRemote) {
 		return cmd_join(args);
 	case "nick":
 		return cmd_nick(args);
+	case "sysmsg":
+		return cmd_sysmsg(args);
 	case "topic":
 		return cmd_topic(args);
 	}
