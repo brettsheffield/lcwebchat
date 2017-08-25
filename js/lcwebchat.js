@@ -237,7 +237,7 @@ function handleInput() {
 
 function writeMsg(unsafestr) {
 	/* formatting is mostly CSS, but also use a non-breaking space so cut and paste is legible */
-	var msg = $('<span class="msg">').text(unsafestr).html();
+	var msg = $('<div>').text(unsafestr).html();
 	var d = new Date();
 	var month = new String("0" + (d.getMonth() + 1)).slice(-2);
 	var day = new String("0" + d.getDate()).slice(-2);
@@ -246,12 +246,13 @@ function writeMsg(unsafestr) {
 	var seconds = new String("0" + d.getSeconds()).slice(-2);
 	var date = '<span class="datestamp">' + d.getFullYear() + '-' + month + '-' + day + '&nbsp;</span>';
 	var time = '<span class="timestamp">' + hours + ':' + minutes + ':' + seconds + '&nbsp;</span>';
-	var line = '<p>' + date + time + msg + '</p>';
+	var line = '<p><span class="msg">' + date + time + msg + '</span></p>';
 	writeChannel(line);
 }
 
-function writeSysMsg(str) {
-	var sysmsg = '<pre><span class="sysmsg">' + str + '</span></pre>';
+function writeSysMsg(unsafestr) {
+	var msg = $('<div>').text(unsafestr).html();
+	var sysmsg = '<pre><span class="sysmsg">' + msg + '</span></pre>';
 	writeChannel(sysmsg);
 }
 
