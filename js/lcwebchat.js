@@ -227,7 +227,7 @@ function handleInput() {
 	if (chanselected) {
 		if (!handleCmd(cmd)) {
 			console.log("sending " + cmd);
-			chanselected.send('&lt;' + nick + "&gt;  " + cmd);
+			chanselected.send('<' + nick + ">  " + cmd);
 		}
 	}
 	cmdSet("");
@@ -235,9 +235,9 @@ function handleInput() {
 	cmdCurrent = "";
 }
 
-function writeMsg(str) {
+function writeMsg(unsafestr) {
 	/* formatting is mostly CSS, but also use a non-breaking space so cut and paste is legible */
-	var msg = '<span class="msg">' + str + '</span>';
+	var msg = $('<span class="msg">').text(unsafestr).html();
 	var d = new Date();
 	var month = new String("0" + (d.getMonth() + 1)).slice(-2);
 	var day = new String("0" + d.getDate()).slice(-2);
@@ -246,7 +246,6 @@ function writeMsg(str) {
 	var seconds = new String("0" + d.getSeconds()).slice(-2);
 	var date = '<span class="datestamp">' + d.getFullYear() + '-' + month + '-' + day + '&nbsp;</span>';
 	var time = '<span class="timestamp">' + hours + ':' + minutes + ':' + seconds + '&nbsp;</span>';
-	//var user = '<span class="nick">&lt;' + nick + '&gt;&nbsp;</span>';
 	var line = '<p>' + date + time + msg + '</p>';
 	writeChannel(line);
 }
