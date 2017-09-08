@@ -157,6 +157,8 @@ function cmd_help(args) {
 	writeSysMsg("  /help                       - displays this help message");
 	writeSysMsg("  /nick nickname              - changes your channel nick");
 	writeSysMsg("  /topic channel topic        - set channel topic");
+	writeSysMsg("  /join channel               - join channel");
+	writeSysMsg("  /part [channel]             - leave active or specified channel");
 	writeSysMsg("");
 	return true;
 }
