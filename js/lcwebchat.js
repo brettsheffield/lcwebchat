@@ -124,6 +124,13 @@ function chanready(cb) {
 	console.log("my channel is ready");
 	var chan = cb.obj;
 	chan.join();
+
+	/* fetch channel topic */
+	chan.getval("topic", gottopic);
+}
+
+function gottopic(obj, opcode, len, id, token, msg) {
+	updateChannelTopic(msg);
 }
 
 function sockready(cb) {
@@ -182,10 +189,14 @@ function cmd_sysmsg(args) {
 function cmd_topic(args, isRemote) {
 	args.shift();
 	var topic = args.join(" ");
-	$("div.topic").html("<h1>" + topic + "<h1>");
+	updateChannelTopic(topic);
 	if (isRemote)
 		writeSysMsg('channel topic changed to "' + topic + '"');
 	return true;
+}
+
+function updateChannelTopic(topic) {
+	$("div.topic").html("<h1>" + topic + "<h1>");
 }
 
 /* process any /cmd irc-like commands */
