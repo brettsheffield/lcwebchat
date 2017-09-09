@@ -147,7 +147,13 @@ function bound(cb) {
 function gotmail(obj, opcode, len, id, token, msg) {
 	console.log("gotmail: " + msg );
 	if (!handleCmd(msg, true)) {
-		writeMsg(msg);
+		if (opcode === LCAST_OP_CHANNEL_GETVAL) {
+			/* FIXME: check which value requested, callback */
+			updateChannelTopic(msg);
+		}
+		else {
+			writeMsg(msg);
+		}
 	}
 }
 
