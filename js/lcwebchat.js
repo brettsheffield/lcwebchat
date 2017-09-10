@@ -144,15 +144,23 @@ function bound(cb) {
 	chanselected = chan;
 }
 
-function gotmail(obj, opcode, len, id, token, msg) {
-	console.log("gotmail: " + msg );
-	if (!handleCmd(msg, true)) {
-		if (opcode === LCAST_OP_CHANNEL_GETVAL) {
-			/* FIXME: check which value requested, callback */
-			updateChannelTopic(msg);
+function gotmail(obj, opcode, len, id, token, key, val) {
+	console.log("gotmail()");
+	if (opcode === LCAST_OP_SOCKET_MSG) {
+		if (!handleCmd(strmsg, true)) {
+			writeMsg(val);
+		}
+	}
+	else if (opcode === LCAST_OP_CHANNEL_GETVAL) {
+		/* TODO: check key */
+		updateChannelTopic(val);
+	}
+	else if (opcode === LCAST_OP_CHANNEL_SETVAL) {
+		if (key === 'topic') {
+			updateChannelTopic(val);
 		}
 		else {
-			writeMsg(msg);
+			console.log("ignoring unknown key '" + key + "'");
 		}
 	}
 }
