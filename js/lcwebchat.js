@@ -147,7 +147,7 @@ function bound(cb) {
 function gotmail(obj, opcode, len, id, token, key, val) {
 	console.log("gotmail()");
 	if (opcode === LCAST_OP_SOCKET_MSG) {
-		if (!handleCmd(strmsg, true)) {
+		if (!handleCmd(val, true)) {
 			writeMsg(val);
 		}
 	}
