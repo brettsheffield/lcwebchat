@@ -33,7 +33,7 @@ var nick = "guest";
 var cmdHistory = [];
 var cmdIndex = -1;
 var cmdCurrent = "";
-var allowedRemoteCmds = [ 'sysmsg', 'topic' ];
+var allowedRemoteCmds = [ 'sysmsg' ];
 
 function init() {
 	console.log("init()");
@@ -198,8 +198,12 @@ function cmd_topic(args, isRemote) {
 	args.shift();
 	var topic = args.join(" ");
 	updateChannelTopic(topic);
-	if (isRemote)
-		writeSysMsg('channel topic changed to "' + topic + '"');
+	writeSysMsg('channel topic changed to "' + topic + '"');
+
+	if (chanselected) {
+		chanselected.setval("topic", topic);
+	}
+
 	return true;
 }
 
