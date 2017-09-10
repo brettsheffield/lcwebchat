@@ -156,7 +156,7 @@ function gotmail(obj, opcode, len, id, token, key, val) {
 		updateChannelTopic(val);
 	}
 	else if (opcode === LCAST_OP_CHANNEL_SETVAL) {
-		if (key === 'topic') {
+		if (key == 'topic') {
 			updateChannelTopic(val);
 		}
 		else {
