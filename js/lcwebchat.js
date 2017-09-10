@@ -37,8 +37,15 @@ var allowedRemoteCmds = [ 'sysmsg' ];
 
 function init() {
 	console.log("init()");
+
+	/* set nick from cookie */
+	var tmp = docCookies.getItem("nick");
+	if (tmp)
+		nick = tmp;
+
 	lctx = new Librecast(ready);
 	handleCmd("/topic no topic set");
+
 	$("#usercmd").keypress(function(e) {
 		if (e.which == KEY_ENTER) {
 			e.preventDefault();
@@ -184,6 +191,9 @@ function cmd_nick(args) {
 		chanselected.send('/sysmsg ' + nick + ' is now known as ' + newnick);
 	}
 	nick = newnick;
+
+	/* store nick in cookie */
+	docCookies.setItem("nick", nick, Infinity);
 
 	return true;
 }
