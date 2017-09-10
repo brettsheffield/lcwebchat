@@ -2,6 +2,7 @@
 
 Basic web demo of chat over multicast using the librecast API.
 
+```
  +--------------------+
  |     lcwebchat      |
  +--------------------+
@@ -17,4 +18,4 @@ Basic web demo of chat over multicast using the librecast API.
  +--------------------+
     _______|________________(IPv6 multicast)
    |         |         |  
-
+```
