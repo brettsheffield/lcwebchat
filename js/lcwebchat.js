@@ -163,6 +163,15 @@ function changeChannel(socketid) {
 	chanselected = chansocks[socketid];
 }
 
+/* check channel name validity */
+function validChannelName(channelName) {
+	/* for now, just insist it starts with a hash */
+	if (channelName[0] !== '#') {
+		channelName = '#' + channelName;
+	}
+	return channelName;
+}
+
 /* create a new chat channel
  * In Librecast terms, this means we set up a chain of callbacks to:
  * 1) create a new socket and channel
@@ -172,6 +181,11 @@ function changeChannel(socketid) {
  * we also need to create a div to display any channel contents
  * and update our channel list */
 function createChannel(channelName) {
+	channelName = validChannelName(channelName);
+	if (!channelName) {
+		writeSysMsg("'" + channelName + "' not a valid channel name");
+		return false;
+	}
 	var disarray = [];
 	var sock = new LibrecastSocket(lctx, sockready);
 	var chan = new LibrecastChannel(lctx, channelName, chanready);
