@@ -38,10 +38,9 @@ var allowedRemoteCmds = [ 'sysmsg' ];
 function init() {
 	console.log("init()");
 
-	/* set nick from cookie */
-	var tmp = docCookies.getItem("nick");
-	if (tmp)
-		nick = tmp;
+	if (typeof localStorage !== "undefined")
+		if (typeof localStorage["nick"] !== "undefined")
+			nick = localStorage["nick"];
 
 	lctx = new Librecast(ready);
 	handleCmd("/topic no topic set");
@@ -192,8 +191,8 @@ function cmd_nick(args) {
 	}
 	nick = newnick;
 
-	/* store nick in cookie */
-	docCookies.setItem("nick", nick, Infinity);
+	if (typeof localStorage !== "undefined")
+		localStorage["nick"] = nick;
 
 	return true;
 }
