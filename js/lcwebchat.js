@@ -36,9 +36,11 @@ var cmdCurrent = "";
 var allowedRemoteCmds = [ 'sysmsg' ];
 var channels = [];
 
+
 function init() {
 	console.log("init()");
 
+	/* read local storage */
 	if (typeof localStorage !== "undefined") {
 		if (typeof localStorage["nick"] !== "undefined")
 			nick = localStorage["nick"];
@@ -56,14 +58,18 @@ function init() {
 		console.log(channels);
 	}
 
-	lctx = new Librecast(ready);
+	/* initalize Librecast context */
+	lctx = new Librecast(librecastCtxReady);
 
+	/* trap user keypress events */
 	$("#usercmd").keypress(function(e) {
 		if (e.which == KEY_ENTER) {
 			e.preventDefault();
 			handleInput();
 		}
 	});
+
+	/* trap up/down keys for command line history */
 	$("#usercmd").keydown(function(e) {
 		switch (e.which) {
 			case KEY_UP:
@@ -78,6 +84,8 @@ function init() {
 				break;
 		}
 	});
+
+	/* set focus to user input box */
 	$("#usercmd").focus();
 }
 
@@ -88,14 +96,17 @@ function clear() {
 	return true;
 }
 
+/* return text in user command input box */
 function cmdGet() {
 	return $("#usercmd").val();
 }
 
+/* set text of user command input box */
 function cmdSet(command) {
 	$("#usercmd").val(command);
 }
 
+/* set contents of user input box from user command history */
 function cmdHistoryGet(index) {
 	console.log("cmdHistoryGet(" + index + ")");
 
@@ -119,6 +130,7 @@ function cmdHistoryGet(index) {
 	}
 }
 
+/* store command on history stack */
 function cmdHistorySet(cmd) {
 	console.log("cmdHistorySet(" + cmd + ")");
 	cmdHistory.unshift(cmd);
@@ -126,14 +138,19 @@ function cmdHistorySet(cmd) {
 		cmdHistory.pop();
 }
 
-function ready() {
-	console.log("ready()");
+/* callback when Librecast Context is ready */
+function librecastCtxReady() {
+	console.log("librecastCtxReady()");
+
+	/* join any channels we were on last time */
 	channels.forEach(function(name) {
 		console.log(name);
 		changeChannel(name);
 	});
 }
 
+/* switch between joined channels */
+/* FIXME: presently this just joins another channel */
 function changeChannel(channelName) {
 	var disarray = [];
 	var sock = new LibrecastSocket(lctx, sockready);
@@ -149,6 +166,9 @@ function changeChannel(channelName) {
 	});
 }
 
+/* callback when LibrecastChannel is created
+ * Note: this doesn't mean the socket is ready, 
+ * or that we are listening to this channel */
 function chanready(cb) {
 	console.log("my channel is ready");
 	var chan = cb.obj;
@@ -169,17 +189,20 @@ function gottopic(obj, opcode, len, id, token, msg) {
 	updateChannelTopic(msg);
 }
 
+/* callback when LibrecastSocket is created */
 function sockready(cb) {
 	console.log("my socket is ready");
 	var sock = cb.obj;
 	sock.listen(gotmail);
 }
 
+/* callback when LibrecastChannel is bound to LibrecastSocket */
 function bound(cb) {
 	var chan = cb.obj;
 	chanselected = chan;
 }
 
+/* callback when message received on LibrecastSocket */
 function gotmail(obj, opcode, len, id, token, key, val) {
 	console.log("gotmail()");
 	if (opcode === LCAST_OP_SOCKET_MSG) {
@@ -201,6 +224,7 @@ function gotmail(obj, opcode, len, id, token, key, val) {
 	}
 }
 
+/* /help command - print some help info */
 function cmd_help(args) {
 	writeSysMsg("/help");
 	writeSysMsg("  commands: ");
@@ -214,6 +238,7 @@ function cmd_help(args) {
 	return true;
 }
 
+/* /nick command - change user nick */
 function cmd_nick(args) {
 	var newnick = args[1];
 
@@ -228,6 +253,7 @@ function cmd_nick(args) {
 	return true;
 }
 
+/* /join command - join a channel */
 function cmd_join(args) {
 	var channel = args[1];
 	writeSysMsg('changing channels to "' + channel + '"');
@@ -239,6 +265,7 @@ function cmd_join(args) {
 	return true;
 }
 
+/* /sysmsg command -  write system message */
 function cmd_sysmsg(args) {
 	args.shift();
 	var msg = args.join(" ");
@@ -246,6 +273,7 @@ function cmd_sysmsg(args) {
 	return true;
 }
 
+/* /topic command - change the channel topic */
 function cmd_topic(args, isRemote) {
 	args.shift();
 	var topic = args.join(" ");
@@ -259,6 +287,7 @@ function cmd_topic(args, isRemote) {
 	return true;
 }
 
+/* set the topic div in the channel window */
 function updateChannelTopic(topic) {
 	$("div.topic").html("<h1>" + topic + "<h1>");
 }
@@ -298,6 +327,7 @@ function handleCmd(cmd, isRemote) {
 	return true; /* do not write failed commands to channel */
 }
 
+/* user typed something, I guess we'd better see what it was */
 function handleInput() {
 	var cmd = cmdGet();
 	cmdHistorySet(cmd);
@@ -312,6 +342,7 @@ function handleInput() {
 	cmdCurrent = "";
 }
 
+/* write chat message to channel window */
 function writeMsg(unsafestr) {
 	/* formatting is mostly CSS, but also use a non-breaking space so cut and paste is legible */
 	var msg = $('<div>').text(unsafestr).html();
@@ -327,18 +358,21 @@ function writeMsg(unsafestr) {
 	writeChannel(line);
 }
 
+/* write system message to active channel window */
 function writeSysMsg(unsafestr) {
 	var msg = $('<div>').text(unsafestr).html();
 	var sysmsg = '<pre><span class="sysmsg">' + msg + '</span></pre>';
 	writeChannel(sysmsg);
 }
 
+/* append string to active channel window, and scroll to bottom */
 function writeChannel(str) {
 	var chanpane = $("div.channel");
 	chanpane.append(str);
 	chanpane.scrollTop(chanpane.prop("scrollHeight") - chanpane.prop("clientHeight"));
 }
 
+/* program entry point - check if we have jQuery available */
 if (HAS_JQUERY) {
 	$(document).ready(function() {
 		console.log("document loaded (jQuery)");
