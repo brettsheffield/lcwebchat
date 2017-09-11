@@ -81,6 +81,13 @@ function init() {
 	$("#usercmd").focus();
 }
 
+/* clear any local storage */
+function clear() {
+	localStorage.clear();
+	console.log("local storage wiped");
+	return true;
+}
+
 function cmdGet() {
 	return $("#usercmd").val();
 }
@@ -202,6 +209,7 @@ function cmd_help(args) {
 	writeSysMsg("  /topic channel topic        - set channel topic");
 	writeSysMsg("  /join channel               - join channel");
 	writeSysMsg("  /part [channel]             - leave active or specified channel");
+	writeSysMsg("  /reset                      - delete all local storage");
 	writeSysMsg("");
 	return true;
 }
@@ -279,6 +287,8 @@ function handleCmd(cmd, isRemote) {
 		return cmd_join(args);
 	case "nick":
 		return cmd_nick(args);
+	case "reset":
+		clear();
 	case "sysmsg":
 		return cmd_sysmsg(args);
 	case "topic":
