@@ -57,7 +57,6 @@ function init() {
 	}
 
 	lctx = new Librecast(ready);
-	handleCmd("/topic no topic set");
 
 	$("#usercmd").keypress(function(e) {
 		if (e.which == KEY_ENTER) {
@@ -152,8 +151,10 @@ function chanready(cb) {
 		channels.push(chan.name);
 		localStorage["channels"] = JSON.stringify(channels);
 	}
+	$('div.channels').append('<li>' + chan.name + '</li>');
 
 	/* fetch channel topic */
+	updateChannelTopic(chan.name);
 	chan.getval("topic", gottopic);
 }
 
