@@ -289,7 +289,7 @@ function cmd_topic(args, isRemote) {
 
 /* set the topic div in the channel window */
 function updateChannelTopic(topic) {
-	$("div.topic").html("<h1>" + topic + "<h1>");
+	$("div.topic").html("<h1>" + topic + "</h1>");
 }
 
 /* process any /cmd irc-like commands */
