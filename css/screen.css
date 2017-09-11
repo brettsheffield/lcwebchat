@@ -22,12 +22,13 @@ div.channels {
 	background-color: lightgrey;
 	float:left;
 	height: 100%;
+	padding-top: 3em;
 	width: 33%;
 }
 div.channel {
 	margin-top: 0.2em;
 	margin-left: 0.5em;
-	margin-bottom: 2em;
+	padding-bottom: 2em;
 	overflow-y: auto;
 	height: 90%;
 }
@@ -78,4 +79,9 @@ span.sysmsg {
 	font-family: monospace;
 	font-size: 90%;
 	color: darkgrey;
+}
+
+div.channels > li {
+	list-style-type: none;
+	padding-left: 2em;
 }
