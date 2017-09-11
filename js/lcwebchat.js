@@ -35,6 +35,7 @@ var cmdIndex = -1;
 var cmdCurrent = "";
 var allowedRemoteCmds = [ 'sysmsg' ];
 var channels = [];
+var chansocks = [];
 
 
 function init() {
@@ -145,13 +146,32 @@ function librecastCtxReady() {
 	/* join any channels we were on last time */
 	channels.forEach(function(name) {
 		console.log(name);
-		changeChannel(name);
+		createChannel(name);
 	});
 }
 
-/* switch between joined channels */
-/* FIXME: presently this just joins another channel */
-function changeChannel(channelName) {
+/* switch between channel panes (sockets) */
+function changeChannel(socketid) {
+	var chatdiv = $('div.chat');
+	chatdiv.find('div.topic').removeClass('active');
+	chatdiv.find('div.socket').removeClass('active');
+	$('div.channels > li.active').removeClass('active');
+	$('#topic_' + socketid).addClass('active');
+	$('#socket_' + socketid).addClass('active');
+	$('#chansock_' + socketid).addClass('active');
+
+	chanselected = chansocks[socketid];
+}
+
+/* create a new chat channel
+ * In Librecast terms, this means we set up a chain of callbacks to:
+ * 1) create a new socket and channel
+ * 2) join the channel when it's ready
+ * 3) bind the channel to the socket
+ * 4) listen on the socket
+ * we also need to create a div to display any channel contents
+ * and update our channel list */
+function createChannel(channelName) {
 	var disarray = [];
 	var sock = new LibrecastSocket(lctx, sockready);
 	var chan = new LibrecastChannel(lctx, channelName, chanready);
@@ -178,15 +198,20 @@ function chanready(cb) {
 		channels.push(chan.name);
 		localStorage["channels"] = JSON.stringify(channels);
 	}
-	$('div.channels').append('<li>' + chan.name + '</li>');
+	var chansock = $('<li id="chansock_' + chan.id2  + '">' + chan.name + '</li>');
+	$('div.channels').append(chansock);
+	chansock.on('click', function() {
+			var socketid = $(this).attr('id').split('_')[1];
+			changeChannel(socketid);
+	});
 
 	/* fetch channel topic */
-	updateChannelTopic(chan.name);
+	updateChannelTopic(chan.name, chan.id2);
 	chan.getval("topic", gottopic);
 }
 
 function gottopic(obj, opcode, len, id, token, msg) {
-	updateChannelTopic(msg);
+	updateChannelTopic(msg, obj.obj.id);
 }
 
 /* callback when LibrecastSocket is created */
@@ -194,29 +219,37 @@ function sockready(cb) {
 	console.log("my socket is ready");
 	var sock = cb.obj;
 	sock.listen(gotmail);
+
+	/* create socket pane */
+	var chatdiv = $('div.chat');
+	chatdiv.append('<div id="topic_' + cb.obj.id + '" class="topic"></div>');
+	chatdiv.append('<div id="socket_' + cb.obj.id + '" class="socket"></div>');
 }
 
 /* callback when LibrecastChannel is bound to LibrecastSocket */
 function bound(cb) {
 	var chan = cb.obj;
-	chanselected = chan;
+	chansocks[chan.id2] = chan;
+	if (typeof chanselected === 'undefined')
+		changeChannel(chan.id2);
 }
 
 /* callback when message received on LibrecastSocket */
 function gotmail(obj, opcode, len, id, token, key, val) {
 	console.log("gotmail()");
+	var socketid = obj.obj.id;
 	if (opcode === LCAST_OP_SOCKET_MSG) {
 		if (!handleCmd(val, true)) {
-			writeMsg(val);
+			writeMsg(val, socketid);
 		}
 	}
 	else if (opcode === LCAST_OP_CHANNEL_GETVAL) {
 		/* TODO: check key */
-		updateChannelTopic(val);
+		updateChannelTopic(val, socketid);
 	}
 	else if (opcode === LCAST_OP_CHANNEL_SETVAL) {
 		if (key == 'topic') {
-			updateChannelTopic(val);
+			updateChannelTopic(val, socketid);
 		}
 		else {
 			console.log("ignoring unknown key '" + key + "'");
@@ -259,7 +292,7 @@ function cmd_join(args) {
 	writeSysMsg('changing channels to "' + channel + '"');
 	console.log(channels);
 	if (channels.indexOf(channel) === -1)
-		changeChannel(channel);
+		createChannel(channel);
 	else
 		console.log("already joined to channel '" + channel + "'");
 	return true;
@@ -277,7 +310,6 @@ function cmd_sysmsg(args) {
 function cmd_topic(args, isRemote) {
 	args.shift();
 	var topic = args.join(" ");
-	updateChannelTopic(topic);
 	writeSysMsg('channel topic changed to "' + topic + '"');
 
 	if (chanselected) {
@@ -288,8 +320,17 @@ function cmd_topic(args, isRemote) {
 }
 
 /* set the topic div in the channel window */
-function updateChannelTopic(topic) {
-	$("div.topic").html("<h1>" + topic + "</h1>");
+function updateChannelTopic(topic, socketid) {
+	if (socketid === undefined) {
+		var divtopic = $("div.topic.active");
+	}
+	else {
+		var divtopic = $("#topic_" + socketid);
+	}
+	if (typeof divtopic !== 'undefined') {
+		divtopic.html("<h1>" + topic + "</h1>");
+	}
+
 }
 
 /* process any /cmd irc-like commands */
@@ -343,7 +384,7 @@ function handleInput() {
 }
 
 /* write chat message to channel window */
-function writeMsg(unsafestr) {
+function writeMsg(unsafestr, socketid) {
 	/* formatting is mostly CSS, but also use a non-breaking space so cut and paste is legible */
 	var msg = $('<div>').text(unsafestr).html();
 	var d = new Date();
@@ -355,21 +396,28 @@ function writeMsg(unsafestr) {
 	var date = '<span class="datestamp">' + d.getFullYear() + '-' + month + '-' + day + '&nbsp;</span>';
 	var time = '<span class="timestamp">' + hours + ':' + minutes + ':' + seconds + '&nbsp;</span>';
 	var line = '<p><span class="msg">' + date + time + msg + '</span></p>';
-	writeChannel(line);
+	writeChannel(line, socketid);
 }
 
 /* write system message to active channel window */
-function writeSysMsg(unsafestr) {
+function writeSysMsg(unsafestr, socketid) {
 	var msg = $('<div>').text(unsafestr).html();
 	var sysmsg = '<pre><span class="sysmsg">' + msg + '</span></pre>';
-	writeChannel(sysmsg);
+	writeChannel(sysmsg, socketid);
 }
 
-/* append string to active channel window, and scroll to bottom */
-function writeChannel(str) {
-	var chanpane = $("div.channel");
-	chanpane.append(str);
-	chanpane.scrollTop(chanpane.prop("scrollHeight") - chanpane.prop("clientHeight"));
+/* append string to channel window, and scroll to bottom */
+function writeChannel(str, socketid) {
+	if (socketid === undefined) {
+		var chanpane = $("div.channel.active");
+	}
+	else {
+		var chanpane = $("#socket_" + socketid);
+	}
+	if (typeof chanpane !== 'undefined') {
+		chanpane.append(str);
+		chanpane.scrollTop(chanpane.prop("scrollHeight") - chanpane.prop("clientHeight"));
+	}
 }
 
 /* program entry point - check if we have jQuery available */

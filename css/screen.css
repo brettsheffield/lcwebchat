@@ -22,15 +22,19 @@ div.channels {
 	background-color: lightgrey;
 	float:left;
 	height: 100%;
-	padding-top: 3em;
+	padding-top: 2.5em;
 	width: 33%;
 }
-div.channel {
+div.socket {
+	display: none;
 	margin-top: 0.2em;
 	margin-left: 0.5em;
 	padding-bottom: 2em;
 	overflow-y: auto;
 	height: 90%;
+}
+div.socket.active {
+	display: block;
 }
 div.chat {
 	background-color: white;
@@ -41,7 +45,11 @@ div.chat {
 }
 div.topic {
 	background-color: lightgrey;
+	display: none;
 	width: 100%;
+}
+div.topic.active {
+	display: block;
 }
 div.command {
 	background-color: black;
@@ -82,6 +90,12 @@ span.sysmsg {
 }
 
 div.channels > li {
+	background-color: #cccccc;
 	list-style-type: none;
 	padding-left: 2em;
+}
+
+div.channels > li.active {
+	background-color: #eeeeee;
+	font-weight: bold;
 }
