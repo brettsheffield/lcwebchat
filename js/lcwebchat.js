@@ -34,13 +34,27 @@ var cmdHistory = [];
 var cmdIndex = -1;
 var cmdCurrent = "";
 var allowedRemoteCmds = [ 'sysmsg' ];
+var channels = [];
 
 function init() {
 	console.log("init()");
 
-	if (typeof localStorage !== "undefined")
+	if (typeof localStorage !== "undefined") {
 		if (typeof localStorage["nick"] !== "undefined")
 			nick = localStorage["nick"];
+
+		if (typeof localStorage["channels"] !== "undefined") {
+			try {
+				channels = JSON.parse(localStorage["channels"]);
+			}
+			catch(e) {
+				console.log("no channels loaded");
+			}
+		}
+		if (channels.length === 0)
+				channels = [ 'chatx' ];
+		console.log(channels);
+	}
 
 	lctx = new Librecast(ready);
 	handleCmd("/topic no topic set");
@@ -108,7 +122,10 @@ function cmdHistorySet(cmd) {
 
 function ready() {
 	console.log("ready()");
-	changeChannel("chatx");
+	channels.forEach(function(name) {
+		console.log(name);
+		changeChannel(name);
+	});
 }
 
 function changeChannel(channelName) {
@@ -130,6 +147,11 @@ function chanready(cb) {
 	console.log("my channel is ready");
 	var chan = cb.obj;
 	chan.join();
+
+	if (channels.indexOf(chan.name) === -1) {
+		channels.push(chan.name);
+		localStorage["channels"] = JSON.stringify(channels);
+	}
 
 	/* fetch channel topic */
 	chan.getval("topic", gottopic);
@@ -200,7 +222,11 @@ function cmd_nick(args) {
 function cmd_join(args) {
 	var channel = args[1];
 	writeSysMsg('changing channels to "' + channel + '"');
-	changeChannel(channel);
+	console.log(channels);
+	if (channels.indexOf(channel) === -1)
+		changeChannel(channel);
+	else
+		console.log("already joined to channel '" + channel + "'");
 	return true;
 }
 
