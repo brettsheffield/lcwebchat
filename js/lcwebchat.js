@@ -55,7 +55,7 @@ function init() {
 			}
 		}
 		if (channels.length === 0)
-				channels = [ 'chatx' ];
+				channels = [ '#chatx' ];
 		console.log(channels);
 	}
 
