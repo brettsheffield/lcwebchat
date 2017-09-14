@@ -59,6 +59,11 @@ function init() {
 			channels = [ '#welcome' ];
 			localStorage["activeChannel"] = '#welcome';
 		}
+		if (typeof localStorage['nick'] === 'undefined') {
+			var newnick = prompt('Welcome.  Please choose username ("nick") to continue', "guest");
+			newnick = (newnick === null) ? nick : newnick;
+			cmd_nick([,newnick]);
+		}
 		console.log(channels);
 	}
 
@@ -329,7 +334,9 @@ function cmd_nick(args) {
 	var newnick = args[1];
 
 	if (chanselected) {
-		chanselected.send('/sysmsg ' + nick + ' is now known as ' + newnick);
+		if (nick) {
+			chanselected.send('/sysmsg ' + nick + ' is now known as ' + newnick);
+		}
 	}
 	nick = newnick;
 
