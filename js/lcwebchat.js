@@ -193,10 +193,11 @@ function createChannel(channelName) {
 	disarray.push(chan.defer);
 
 	$.when.apply($, disarray).done(function() {
-			console.log("socket and channel both ready");
-			console.log("socket id=" + sock.id);
-			console.log("channel id=" + chan.id);
-			chan.bind(sock, bound);
+		console.log("socket and channel both ready");
+		console.log("socket id=" + sock.id);
+		console.log("channel id=" + chan.id);
+		chan.bind(sock, bound);
+		chan.send('/sysmsg ' + nick + ' has joined ' + chan.name);
 	});
 }
 
