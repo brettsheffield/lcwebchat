@@ -168,6 +168,12 @@ function changeChannel(socketid) {
 	}
 }
 
+function socketidByChannelName(channelName) {
+	var chansock = $('li:contains(' + channelName + ')');
+	var socketid = chansock.attr('id').split('_')[1];
+	return socketid;
+}
+
 /* check channel name validity */
 function validChannelName(channelName) {
 	/* for now, just insist it starts with a hash */
@@ -186,7 +192,6 @@ function validChannelName(channelName) {
  * we also need to create a div to display any channel contents
  * and update our channel list */
 function createChannel(channelName) {
-	channelName = validChannelName(channelName);
 	if (!channelName) {
 		writeSysMsg("'" + channelName + "' not a valid channel name");
 		return false;
@@ -261,7 +266,8 @@ function prepChannelElements(chan) {
 function bound(cb) {
 	var chan = cb.obj;
 	chansocks[chan.id2] = chan;
-	if (typeof chanselected === 'undefined')
+	if ((localStorage["activeChannel"] == chan.name)
+	|| (typeof chanselected === 'undefined'))
 		changeChannel(chan.id2);
 
 	console.log('channel ' + chan.name + ' bound to socket ' + chan.id2);
@@ -333,13 +339,17 @@ function cmd_nick(args) {
 
 /* /join command - join a channel */
 function cmd_join(args) {
-	var channel = args[1];
+	var channel = validChannelName(args[1]);
 	writeSysMsg('changing channels to "' + channel + '"');
 	console.log(channels);
-	if (channels.indexOf(channel) === -1)
+	if (channels.indexOf(channel) === -1) {
 		createChannel(channel);
-	else
+		localStorage["activeChannel"] = channel;
+	}
+	else {
 		console.log("already joined to channel '" + channel + "'");
+		changeChannel(socketidByChannelName(channel));
+	}
 	return true;
 }
 
