@@ -423,7 +423,7 @@ function writeSysMsg(unsafestr, socketid) {
 /* append string to channel window, and scroll to bottom */
 function writeChannel(str, socketid) {
 	if (typeof socketid === 'undefined') {
-		var chanpane = $("div.channel.active");
+		var chanpane = $("div.socket.active");
 	}
 	else {
 		var chanpane = $("#socket_" + socketid);
