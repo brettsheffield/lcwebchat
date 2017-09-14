@@ -55,8 +55,10 @@ function init() {
 				console.log("no channels loaded");
 			}
 		}
-		if (channels.length === 0)
-				channels = [ '#welcome' ];
+		if (channels.length === 0) {
+			channels = [ '#welcome' ];
+			localStorage["activeChannel"] = '#welcome';
+		}
 		console.log(channels);
 	}
 
