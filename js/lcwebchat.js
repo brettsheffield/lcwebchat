@@ -29,6 +29,7 @@ const CMD_HISTORY_LIMIT=32;
 
 var lctx;
 var chanselected;
+var sockselected;
 var nick = "guest";
 var cmdHistory = [];
 var cmdIndex = -1;
@@ -161,6 +162,10 @@ function changeChannel(socketid) {
 	$('#chansock_' + socketid).addClass('active');
 
 	chanselected = chansocks[socketid];
+	var channelName = $('#chansock_' + socketid).text();
+	if (channelName) {
+		localStorage["activeChannel"] = channelName;
+	}
 }
 
 /* check channel name validity */
@@ -193,11 +198,10 @@ function createChannel(channelName) {
 	disarray.push(chan.defer);
 
 	$.when.apply($, disarray).done(function() {
-		console.log("socket and channel both ready");
+		console.log("socket and channel both ready (" + chan.name + ")");
 		console.log("socket id=" + sock.id);
 		console.log("channel id=" + chan.id);
 		chan.bind(sock, bound);
-		chan.send('/sysmsg ' + nick + ' has joined ' + chan.name);
 	});
 }
 
@@ -205,24 +209,14 @@ function createChannel(channelName) {
  * Note: this doesn't mean the socket is ready, 
  * or that we are listening to this channel */
 function chanready(cb) {
-	console.log("my channel is ready");
 	var chan = cb.obj;
-	chan.join();
+	console.log("channel " + chan.name + " is ready");
+	chan.join(joined);
 
 	if (channels.indexOf(chan.name) === -1) {
 		channels.push(chan.name);
 		localStorage["channels"] = JSON.stringify(channels);
 	}
-	var chansock = $('<li id="chansock_' + chan.id2  + '">' + chan.name + '</li>');
-	$('div.channels').append(chansock);
-	chansock.on('click', function() {
-			var socketid = $(this).attr('id').split('_')[1];
-			changeChannel(socketid);
-	});
-
-	/* fetch channel topic */
-	updateChannelTopic(chan.name, chan.id2);
-	chan.getval("topic", gottopic);
 }
 
 function gottopic(obj, opcode, len, id, token, msg) {
@@ -234,11 +228,33 @@ function sockready(cb) {
 	console.log("my socket is ready");
 	var sock = cb.obj;
 	sock.listen(gotmail);
+}
 
-	/* create socket pane */
-	var chatdiv = $('div.chat');
-	chatdiv.append('<div id="topic_' + cb.obj.id + '" class="topic"></div>');
-	chatdiv.append('<div id="socket_' + cb.obj.id + '" class="socket"></div>');
+/* create/update channel elements */
+function prepChannelElements(chan) {
+	var chansock = $('li:contains(' + chan.name + ')');
+	var socketid = chan.id2;
+	if (chansock.length) {
+		/* update socketids for existing channel */
+		var oldsockid = chansock.attr('id').split('_')[1];
+		$('li#chansock_' + oldsockid).attr('id', 'chansock_' + socketid);
+		$('div#socket_' + oldsockid).attr('id', 'socket_' + socketid);
+		$('div#topic_' + oldsockid).attr('id', 'topic_' + socketid);
+	}
+	else {
+		/* create socket pane */
+		var chatdiv = $('div.chat');
+		chatdiv.append('<div id="topic_' + socketid + '" class="topic"></div>');
+		chatdiv.append('<div id="socket_' + socketid + '" class="socket"></div>');
+		chansock = $('<li id="chansock_' + socketid  + '">' + chan.name + '</li>');
+		$('div.channels').append(chansock);
+		chansock.on('click', function() {
+				var socketid = $(this).attr('id').split('_')[1];
+				changeChannel(socketid);
+		});
+	}
+	if (localStorage["activeChannel"] == chan.name)
+		changeChannel(socketid);
 }
 
 /* callback when LibrecastChannel is bound to LibrecastSocket */
@@ -247,6 +263,20 @@ function bound(cb) {
 	chansocks[chan.id2] = chan;
 	if (typeof chanselected === 'undefined')
 		changeChannel(chan.id2);
+
+	console.log('channel ' + chan.name + ' bound to socket ' + chan.id2);
+
+	prepChannelElements(chan);
+
+	/* fetch channel topic */
+	updateChannelTopic(chan.name, chan.id2);
+	chan.getval("topic", gottopic);
+}
+
+function joined(cb) {
+	var chan = cb.obj;
+	console.log("channel " + chan.name + " joined");
+	chan.send('/sysmsg ' + nick + ' has joined ' + chan.name);
 }
 
 /* callback when message received on LibrecastSocket */
