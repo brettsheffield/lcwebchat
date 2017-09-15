@@ -166,7 +166,7 @@ function changeChannel(socketid) {
 	$('div.channels > li.active').removeClass('active');
 	$('#topic_' + socketid).addClass('active');
 	$('#socket_' + socketid).addClass('active');
-	$('#chansock_' + socketid).addClass('active');
+	$('#chansock_' + socketid).addClass('active').removeClass('unread');
 
 	chanselected = chansocks[socketid];
 	var channelName = $('#chansock_' + socketid).text();
@@ -477,6 +477,9 @@ function writeChannel(str, socketid) {
 	}
 	else {
 		var chanpane = $("#socket_" + socketid);
+	}
+	if (!chanpane.hasClass('active')) {
+		$("#chansock_" + socketid).addClass('unread');
 	}
 	if (typeof chanpane !== 'undefined') {
 		chanpane.append(str);

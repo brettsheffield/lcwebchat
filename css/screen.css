@@ -99,3 +99,6 @@ div.channels > li.active {
 	background-color: #eeeeee;
 	font-weight: bold;
 }
+div.channels > li.unread {
+	color: blue;
+}
