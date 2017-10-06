@@ -325,6 +325,7 @@ function cmd_help(args) {
 	writeSysMsg("  /join channel               - join channel");
 	writeSysMsg("  /part [channel]             - leave active or specified channel");
 	writeSysMsg("  /reset                      - delete all local storage");
+	writeSysMsg("  /rtl                        - toggle right-to-left input");
 	writeSysMsg("");
 	return true;
 }
@@ -367,6 +368,13 @@ function cmd_sysmsg(args) {
 	args.shift();
 	var msg = args.join(" ");
 	writeSysMsg(msg);
+	return true;
+}
+
+/* /rtl command - toggle right-to-left input */
+function cmd_rtl(args) {
+	$("#usercmd").toggleClass('rtl');
+
 	return true;
 }
 
@@ -423,6 +431,8 @@ function handleCmd(cmd, isRemote) {
 		return cmd_nick(args);
 	case "reset":
 		clear();
+	case "rtl":
+		return cmd_rtl(args);
 	case "sysmsg":
 		return cmd_sysmsg(args);
 	case "topic":
@@ -438,6 +448,9 @@ function handleInput() {
 	cmdHistorySet(cmd);
 	if (chanselected) {
 		if (!handleCmd(cmd)) {
+			if (isRTL()) {
+				cmd = esrever.reverse(cmd);
+			}
 			console.log("sending " + cmd);
 			chanselected.send('<' + nick + ">  " + cmd);
 		}
@@ -445,6 +458,10 @@ function handleInput() {
 	cmdSet("");
 	cmdIndex = -1;
 	cmdCurrent = "";
+}
+
+function isRTL() {
+	return $('#usercmd').hasClass('rtl');
 }
 
 /* write chat message to channel window */

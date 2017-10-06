@@ -65,6 +65,11 @@ div.command {
 	width: 100%;
 }
 
+.rtl {
+	direction: rtl;
+	unicode-bidi: bidi-override;
+}
+
 span.nick {
 	font-family: monospace;
 	font-size: 90%;
