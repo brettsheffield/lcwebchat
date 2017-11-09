@@ -284,6 +284,9 @@ function bound(cb) {
 	/* fetch channel topic */
 	updateChannelTopic(chan.name, chan.id2);
 	chan.getval("topic", gottopic);
+
+	/* fetch channel history */
+	chan.getmsg(gotresult);
 }
 
 function joined(cb) {
@@ -313,6 +316,18 @@ function gotmail(obj, opcode, len, id, token, key, val) {
 			console.log("ignoring unknown key '" + key + "'");
 		}
 	}
+}
+
+function gotresult(obj, opcode, len, id, token, key, val) {
+	var socketid = obj.obj.id2;
+
+	if (typeof gotresult.count === 'undefined') {
+		gotresult.count = 0;
+	}
+	console.log("socket " + id + ": got a message result " + ++gotresult.count);
+	console.log(val);
+
+	writeMsg(val, socketid);
 }
 
 /* /help command - print some help info */
@@ -402,7 +417,6 @@ function updateChannelTopic(topic, socketid) {
 	if (typeof divtopic !== 'undefined') {
 		divtopic.html("<h1>" + topic + "</h1>");
 	}
-
 }
 
 /* process any /cmd irc-like commands */
