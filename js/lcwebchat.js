@@ -296,12 +296,12 @@ function joined(cb) {
 }
 
 /* callback when message received on LibrecastSocket */
-function gotmail(obj, opcode, len, id, token, key, val) {
+function gotmail(obj, opcode, len, id, token, key, val, timestamp) {
 	console.log("gotmail()");
 	var socketid = obj.obj.id;
 	if (opcode === LCAST_OP_SOCKET_MSG) {
 		if (!handleCmd(val, true)) {
-			writeMsg(val, socketid);
+			writeMsg(val, socketid, timestamp);
 		}
 	}
 	else if (opcode === LCAST_OP_CHANNEL_GETVAL) {
@@ -318,7 +318,7 @@ function gotmail(obj, opcode, len, id, token, key, val) {
 	}
 }
 
-function gotresult(obj, opcode, len, id, token, key, val) {
+function gotresult(obj, opcode, len, id, token, key, val, timestamp) {
 	var socketid = obj.obj.id2;
 
 	if (typeof gotresult.count === 'undefined') {
@@ -327,7 +327,7 @@ function gotresult(obj, opcode, len, id, token, key, val) {
 	console.log("socket " + id + ": got a message result " + ++gotresult.count);
 	console.log(val);
 
-	writeMsg(val, socketid);
+	writeMsg(val, socketid, timestamp);
 }
 
 /* /help command - print some help info */
@@ -479,15 +479,18 @@ function isRTL() {
 }
 
 /* write chat message to channel window */
-function writeMsg(unsafestr, socketid) {
-	/* formatting is mostly CSS, but also use a non-breaking space so cut and paste is legible */
+function writeMsg(unsafestr, socketid, timestamp) {
 	var msg = $('<div>').text(unsafestr).html();
-	var d = new Date();
+
+	/* timestamp message */
+	var d = (typeof timestamp === 'undefined' || timestamp === 0) ? new Date() : new Date(timestamp);
 	var month = new String("0" + (d.getMonth() + 1)).slice(-2);
 	var day = new String("0" + d.getDate()).slice(-2);
 	var hours = new String("0" + d.getHours()).slice(-2);
 	var minutes = new String("0" + d.getMinutes()).slice(-2);
 	var seconds = new String("0" + d.getSeconds()).slice(-2);
+
+	/* formatting is mostly CSS, but also use a non-breaking space so cut and paste is legible */
 	var date = '<span class="datestamp">' + d.getFullYear() + '-' + month + '-' + day + '&nbsp;</span>';
 	var time = '<span class="timestamp">' + hours + ':' + minutes + ':' + seconds + '&nbsp;</span>';
 	var line = '<p><span class="msg">' + date + time + msg + '</span></p>';
