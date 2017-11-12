@@ -327,7 +327,9 @@ function gotresult(obj, opcode, len, id, token, key, val, timestamp) {
 	console.log("socket " + id + ": got a message result " + ++gotresult.count);
 	console.log(val);
 
-	writeMsg(val, socketid, timestamp);
+	if (val.substring(0,1) != '/' && val !== 'topic') {
+		writeMsg(val, socketid, timestamp);
+	}
 }
 
 /* /help command - print some help info */
