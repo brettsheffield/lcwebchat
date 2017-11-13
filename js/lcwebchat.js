@@ -22,10 +22,10 @@
 
 "use strict";
 
-const KEY_ENTER = 13;
-const KEY_DOWN = 40;
-const KEY_UP = 38;
-const CMD_HISTORY_LIMIT=32;
+var KEY_ENTER = 13;
+var KEY_DOWN = 40;
+var KEY_UP = 38;
+var CMD_HISTORY_LIMIT=32;
 
 var lctx;
 var chanselected;
@@ -431,11 +431,11 @@ function handleCmd(cmd, isRemote) {
 
 	/* send remote command */
 	if (chanselected) {
-		if (!isRemote && allowedRemoteCmds.includes(command)) {
+		if (!isRemote && allowedRemoteCmds.indexOf(command) >= 0) {
 			chanselected.send(cmd);
 		}
 	}
-	if (isRemote && !allowedRemoteCmds.includes(command)) {
+	if (isRemote && !allowedRemoteCmds.indexOf(command) >= 0) {
 		console.log("bad remote command received: " + command);
 	}
 	switch (command) {
