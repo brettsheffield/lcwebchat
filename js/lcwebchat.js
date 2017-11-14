@@ -187,7 +187,7 @@ function validChannelName(channelName) {
 	if (channelName[0] !== '#') {
 		channelName = '#' + channelName;
 	}
-	return channelName;
+	return channelName.toLowerCase();
 }
 
 /* create a new chat channel
@@ -203,6 +203,7 @@ function createChannel(channelName) {
 		writeSysMsg("'" + channelName + "' not a valid channel name");
 		return false;
 	}
+	channelName = validChannelName(channelName);
 	var disarray = [];
 	var sock = new LibrecastSocket(lctx, sockready);
 	var chan = new LibrecastChannel(lctx, channelName, chanready);
