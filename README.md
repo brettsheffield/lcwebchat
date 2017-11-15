@@ -1,10 +1,10 @@
-# lcwebchat
+# libreUM - Librecast Unified Messaging
 
 Basic web demo of chat over multicast using the librecast API.
 
 ```
  +--------------------+
- |     lcwebchat      |
+ |     libreum        |
  +--------------------+
  |    librecast.js    |
  +--------------------+

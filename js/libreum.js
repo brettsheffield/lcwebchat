@@ -1,7 +1,7 @@
 /* 
- * lcwebchat.js - basic librecast chat demo
+ * libreum.js - basic librecast chat demo
  *
- * this file is part of LCWEBCHAT
+ * this file is part of LIBREUM
  *
  * Copyright (c) 2017 Brett Sheffield <brett@gladserv.com>
  *
