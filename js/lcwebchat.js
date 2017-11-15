@@ -175,6 +175,38 @@ function changeChannel(socketid) {
 	}
 }
 
+/* remove channel from joined list */
+function deleteChannel(channelName) {
+	var i = 0;
+	while (i < channels.length) {
+		if (channels[i] === channelName.toLowerCase()) {
+			delete channels[i];
+			localStorage["channels"] = JSON.stringify(channels);
+			break;
+		}
+		i++;
+	}
+}
+
+/* leave (part) channel */
+function partChannel(channelName) {
+	console.log('partChannel(' + channelName + ')');
+	var socketid = socketidByChannelName(channelName);
+
+	deleteChannel(channelName);
+
+	/* change to another channel if leaving active */
+	if (localStorage["activeChannel"] === channelName) {
+		changeChannel(socketidByChannelName(channels[0]));
+	}
+
+	/* TODO: close both channel and socket */
+
+	/* drop display elements */
+	$('#socket_' + socketid).remove();
+	$('#chansock_' + socketid).remove();
+}
+
 function socketidByChannelName(channelName) {
 	var chansock = $('li:contains(' + channelName + ')');
 	var socketid = chansock.attr('id').split('_')[1];
@@ -183,10 +215,23 @@ function socketidByChannelName(channelName) {
 
 /* check channel name validity */
 function validChannelName(channelName) {
+	if (typeof channelName === 'undefined') {
+		return false;
+	}
+
+	// trim whitespace
+	channelName = channelName.replace(/^s+|s+$/g, '');
+
 	/* for now, just insist it starts with a hash */
 	if (channelName[0] !== '#') {
 		channelName = '#' + channelName;
 	}
+
+	/* name must have at least one character + leading hash */
+	if (channelName.length < 2) {
+		return false;
+	}
+
 	return channelName.toLowerCase();
 }
 
@@ -381,6 +426,28 @@ function cmd_join(args) {
 	return true;
 }
 
+/* /part command - leave a channel */
+function cmd_part(args) {
+	if (typeof args[1] !== 'undefined') {
+		var channelName = validChannelName(args[1]);
+		if (!(channelName)) {
+			console.log("invalid channel name");
+			return true;
+		}
+	}
+	else {
+		// no channel selected, part active channel
+		channelName = chanselected.name;
+	}
+	writeSysMsg('parting channel "' + channelName + '"');
+	if (channels.indexOf(channelName) === -1) {
+		console.log("invalid channel name");
+		return true;
+	}
+	partChannel(channelName);
+	return true;
+}
+
 /* /sysmsg command -  write system message */
 function cmd_sysmsg(args) {
 	args.shift();
@@ -446,6 +513,8 @@ function handleCmd(cmd, isRemote) {
 		return cmd_join(args);
 	case "nick":
 		return cmd_nick(args);
+	case "part":
+		return cmd_part(args);
 	case "reset":
 		clear();
 	case "rtl":
