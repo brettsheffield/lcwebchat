@@ -177,14 +177,12 @@ function changeChannel(socketid) {
 
 /* remove channel from joined list */
 function deleteChannel(channelName) {
-	var i = 0;
-	while (i < channels.length) {
+	for (var i = 0, ii = channels.length; i < ii; i++) {
 		if (channels[i] === channelName.toLowerCase()) {
 			delete channels[i];
 			localStorage["channels"] = JSON.stringify(channels);
 			break;
 		}
-		i++;
 	}
 }
 
