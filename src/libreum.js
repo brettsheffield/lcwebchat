@@ -2,7 +2,9 @@
 "use strict";
 
 var channels = [];
+var chanselected;
 var nick = "guest";
+var defaultChannel = '#welcome';
 
 /* /nick command - change user nick */
 function cmd_nick(args) {
@@ -22,6 +24,7 @@ function cmd_nick(args) {
 }
 
 function readLocalStorage() {
+	var localStorage = localStorage;
 	if (typeof localStorage !== "undefined") {
 		if (typeof localStorage.nick !== "undefined")
 			nick = localStorage.nick;
@@ -35,8 +38,8 @@ function readLocalStorage() {
 			}
 		}
 		if (channels.length === 0) {
-			channels = [ '#welcome' ];
-			localStorage.activeChannel = '#welcome';
+			channels = [ defaultChannel ];
+			localStorage.activeChannel = defaultChannel;
 		}
 		if (typeof localStorage.nick === 'undefined') {
 			var newnick = prompt('Welcome.	Please choose username ("nick") to continue', "guest");
