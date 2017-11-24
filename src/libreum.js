@@ -37,6 +37,7 @@ var cmdHistory = [];
 var cmdIndex = -1;
 var channelDefault = "#welcome";
 var lctx;
+var localStorage = localStorage;
 var nick = "guest";
 var sockselected;
 
