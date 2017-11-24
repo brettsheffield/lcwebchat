@@ -28,16 +28,17 @@ var KEY_DOWN = 40;
 var KEY_UP = 38;
 var CMD_HISTORY_LIMIT=32;
 
-var lctx;
-var chanselected;
-var sockselected;
-var nick = "guest";
-var cmdHistory = [];
-var cmdIndex = -1;
-var cmdCurrent = "";
 var allowedRemoteCmds = [ 'sysmsg' ];
 var channels = [];
+var chanselected;
 var chansocks = [];
+var cmdCurrent = "";
+var cmdHistory = [];
+var cmdIndex = -1;
+var channelDefault = "#welcome";
+var lctx;
+var nick = "guest";
+var sockselected;
 
 
 function init() {
@@ -57,8 +58,8 @@ function init() {
 			}
 		}
 		if (channels.length === 0) {
-			channels = [ '#welcome' ];
-			localStorage.activeChannel = '#welcome';
+			channels = [ channelDefault ];
+			localStorage.activeChannel = channelDefault;
 		}
 		if (typeof localStorage.nick === 'undefined') {
 			var newnick = prompt('Welcome.  Please choose username ("nick") to continue', "guest");
