@@ -344,16 +344,16 @@ function joined(cb) {
 function gotmail(obj, opcode, len, id, token, key, val, timestamp) {
 	console.log("gotmail()");
 	var socketid = obj.obj.id;
-	if (opcode === lc.LCAST_OP_SOCKET_MSG) {
+	if (opcode === lc.OP_SOCKET_MSG) {
 		if (!handleCmd(val, true)) {
 			writeMsg(val, socketid, timestamp);
 		}
 	}
-	else if (opcode === lc.LCAST_OP_CHANNEL_GETVAL) {
+	else if (opcode === lc.OP_CHANNEL_GETVAL) {
 		/* TODO: check key */
 		updateChannelTopic(val, socketid);
 	}
-	else if (opcode === lc.LCAST_OP_CHANNEL_SETVAL) {
+	else if (opcode === lc.OP_CHANNEL_SETVAL) {
 		if (key == 'topic') {
 			updateChannelTopic(val, socketid);
 		}
