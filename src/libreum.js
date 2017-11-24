@@ -37,7 +37,7 @@ var cmdHistory = [];
 var cmdIndex = -1;
 var channelDefault = "#welcome";
 var lctx;
-var localStorage = localStorage;
+var localCache = localStorage;
 var nick = "guest";
 var sockselected;
 
@@ -46,13 +46,13 @@ function init() {
 	console.log("init()");
 
 	/* read local storage */
-	if (typeof localStorage !== "undefined") {
-		if (typeof localStorage.nick !== "undefined")
-			nick = localStorage.nick;
+	if (typeof localCache !== "undefined") {
+		if (typeof localCache.nick !== "undefined")
+			nick = localCache.nick;
 
-		if (typeof localStorage.channels !== "undefined") {
+		if (typeof localCache.channels !== "undefined") {
 			try {
-				channels = JSON.parse(localStorage.channels);
+				channels = JSON.parse(localCache.channels);
 			}
 			catch(e) {
 				console.log("no channels loaded");
@@ -60,14 +60,18 @@ function init() {
 		}
 		if (channels.length === 0) {
 			channels = [ channelDefault ];
-			localStorage.activeChannel = channelDefault;
+			localCache.activeChannel = channelDefault;
 		}
-		if (typeof localStorage.nick === 'undefined') {
+		if (typeof localCache.nick === 'undefined') {
 			var newnick = prompt('Welcome.  Please choose username ("nick") to continue', "guest");
 			newnick = (newnick === null) ? nick : newnick;
 			cmd_nick([,newnick]);
 		}
 		console.log(channels);
+	}
+	else {
+		channels = [ channelDefault ];
+		localCache.activeChannel = channelDefault;
 	}
 
 	/* initalize Librecast context */
@@ -174,7 +178,7 @@ function changeChannel(socketid) {
 	chanselected = chansocks[socketid];
 	var channelName = $('#chansock_' + socketid).text();
 	if (channelName) {
-		localStorage.activeChannel = channelName;
+		localCache.activeChannel = channelName;
 	}
 }
 
@@ -183,7 +187,7 @@ function deleteChannel(channelName) {
 	for (var i = 0, ii = channels.length; i < ii; i++) {
 		if (channels[i] === channelName.toLowerCase()) {
 			delete channels[i];
-			localStorage.channels = JSON.stringify(channels);
+			localCache.channels = JSON.stringify(channels);
 			break;
 		}
 	}
@@ -197,7 +201,7 @@ function partChannel(channelName) {
 	deleteChannel(channelName);
 
 	/* change to another channel if leaving active */
-	if (localStorage.activeChannel === channelName) {
+	if (localCache.activeChannel === channelName) {
 		changeChannel(socketidByChannelName(channels[0]));
 	}
 
@@ -274,7 +278,7 @@ function chanready(cb) {
 
 	if (channels.indexOf(chan.name) === -1) {
 		channels.push(chan.name);
-		localStorage.channels = JSON.stringify(channels);
+		localCache.channels = JSON.stringify(channels);
 	}
 }
 
@@ -312,7 +316,7 @@ function prepChannelElements(chan) {
 				changeChannel(socketid);
 		});
 	}
-	if (localStorage.activeChannel == chan.name)
+	if (localCache.activeChannel == chan.name)
 		changeChannel(socketid);
 }
 
@@ -320,7 +324,7 @@ function prepChannelElements(chan) {
 function bound(cb) {
 	var chan = cb.obj;
 	chansocks[chan.id2] = chan;
-	if ((localStorage.activeChannel == chan.name) || (typeof chanselected === 'undefined'))
+	if ((localCache.activeChannel == chan.name) || (typeof chanselected === 'undefined'))
 		changeChannel(chan.id2);
 
 	console.log('channel ' + chan.name + ' bound to socket ' + chan.id2);
@@ -404,8 +408,8 @@ function cmd_nick(args) {
 	}
 	nick = newnick;
 
-	if (typeof localStorage !== "undefined")
-		localStorage.nick = nick;
+	if (typeof localCache !== "undefined")
+		localCache.nick = nick;
 
 	return true;
 }
@@ -417,7 +421,7 @@ function cmd_join(args) {
 	console.log(channels);
 	if (channels.indexOf(channel) === -1) {
 		createChannel(channel);
-		localStorage.activeChannel = channel;
+		localCache.activeChannel = channel;
 	}
 	else {
 		console.log("already joined to channel '" + channel + "'");
