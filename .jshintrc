@@ -1,4 +1,6 @@
 {
 	"elision": true,
-	"expr": true
+	"expr": true,
+	"-W006": true,
+	"-W007": true
 }
