@@ -3,6 +3,9 @@ MINIFY=uglifyjs --compress --mangle --
 
 all: lint minify
 
+debug: all
+	cp src/libreum.js js/libreum.min.js
+
 .PHONY: lint
 
 lint:
