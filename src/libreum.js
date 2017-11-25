@@ -60,7 +60,14 @@ function ChatPane(name) {
 
 	/* create channel(s) - several channels can be bound to one socket */
 	for (var i = 0; i < arguments.length; i++) {
-		var chan = new LIBRECAST.Channel(lctx, arguments[i], chanready);
+		var chan;
+		try {
+			chan = new LIBRECAST.Channel(lctx, arguments[i], chanready);
+		}
+		catch(e) {
+			console.log("unable to create channel " + arguments[i]);
+			continue;
+		}
 		this.channels.push(chan);
 		promises.push(chan.defer);
 	}
