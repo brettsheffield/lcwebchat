@@ -41,10 +41,7 @@ var localCache = localStorage;
 var nick = "guest";
 var sockselected;
 
-
-function init() {
-	console.log("init()");
-
+function readLocalStorage() {
 	/* read local storage */
 	if (typeof localCache !== "undefined") {
 		if (typeof localCache.nick !== "undefined")
@@ -73,6 +70,12 @@ function init() {
 		channels = [ channelDefault ];
 		localCache.activeChannel = channelDefault;
 	}
+}
+
+function init() {
+	console.log("init()");
+
+	readLocalStorage();
 
 	/* initalize Librecast context */
 	lctx = new LIBRECAST.Librecast(librecastCtxReady);
