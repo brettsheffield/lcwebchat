@@ -1,5 +1,5 @@
 LINTER=jshint
-MINIFY=uglifyjs --compress --mangle --
+MINIFY=uglifyjs --compress='drop_console true, warnings true' --mangle --
 
 all: lint minify
 
