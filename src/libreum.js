@@ -42,6 +42,48 @@ var nick = "guest";
 var sockselected;
 
 
+/**
+ * ChatPane -  a chat window
+ * binds one or more Librecast.Channels to a Librecast.Socket
+ * @constructor
+ * @param {string} name			- name of the window
+ * @param {string} channelName	- The name of a channel to bind
+ * there can be any number of channelName params.
+ */
+function ChatPane(name) {
+	var self = this;
+	this.channels = [];
+
+	/* create socket */
+	this.socket = new LIBRECAST.Socket(lctx, sockready);
+	var promises = [this.socket.defer];
+
+	/* create channel(s) - several channels can be bound to one socket */
+	for (var i = 0; i < arguments.length; i++) {
+		var chan = new LIBRECAST.Channel(lctx, arguments[i], chanready);
+		this.channels.push(chan);
+		promises.push(chan.defer);
+	}
+
+	/* callback when both the socket and each channel are ready */
+	var socket = this.socket;
+	this.channels.forEach(function(chan) {
+		$.when(socket.defer, chan.defer).done(function () {
+			chan.bind(socket, bound); /* FIXME: only create one pane per ChatPane */
+		});
+	});
+
+	/* callback only when socket and all channels are ready */
+	$.when.apply($, promises).done(function () {
+		self.onReady();
+	});
+}
+
+ChatPane.prototype.onReady = function() {
+	console.log("ChatPane.onReady()");
+};
+
+
 /* callback when Librecast.Channel is bound to Librecast.Socket */
 function bound(cb) {
 	var chan = cb.obj;
@@ -428,9 +470,11 @@ function joined(cb) {
 function librecastCtxReady(ctx) {
 	console.log("librecastCtxReady()");
 
+	ctx.chatPanes = [];
+
 	/* join any channels we were on last time */
 	channelNames.forEach(function(name) {
-		createChannel(name);
+		ctx.chatPanes.push(new ChatPane(name));
 	});
 }
 
