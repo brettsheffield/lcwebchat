@@ -43,17 +43,17 @@ var sockselected;
 
 
 /* callback when Librecast Context is ready */
-function librecastCtxReady() {
+function librecastCtxReady(ctx) {
 	console.log("librecastCtxReady()");
 
 	/* join any channels we were on last time */
 	channelNames.forEach(function(name) {
-		console.log(name);
 		createChannel(name);
 	});
 }
 
 function initKeyEvents() {
+	console.log("initKeyEvents()");
 	/* trap user keypress events */
 	$("#usercmd").keypress(function(e) {
 		if (e.which == KEY_ENTER) {
@@ -79,11 +79,20 @@ function initKeyEvents() {
 	});
 }
 
+/* prompt user for a new nick */
+function promptNick(oldnick) {
+	if (typeof oldnick === 'undefined') { oldnick = "guest"; }
+	console.log("promptNick()");
+	var newnick = prompt('Welcome.  Please choose username ("nick") to continue', oldnick);
+	newnick = (newnick === null) ? nick : newnick;
+	return newnick;
+}
+
 function readLocalStorage() {
-	/* read local storage */
+	console.log("readLocalStorage()");
+
 	if (typeof localCache !== "undefined") {
-		if (typeof localCache.nick !== "undefined")
-			nick = localCache.nick;
+		nick = localCache.nick;
 
 		if (typeof localCache.channels !== "undefined") {
 			try {
@@ -97,17 +106,14 @@ function readLocalStorage() {
 			channelNames = [ channelDefault ];
 			localCache.activeChannel = channelDefault;
 		}
-		if (typeof localCache.nick === 'undefined') {
-			var newnick = prompt('Welcome.  Please choose username ("nick") to continue', "guest");
-			newnick = (newnick === null) ? nick : newnick;
-			cmd_nick([,newnick]);
-		}
 		console.log(channelNames);
 	}
 	else {
 		channelNames = [ channelDefault ];
 		localCache.activeChannel = channelDefault;
 	}
+
+	if (typeof nick === 'undefined') { nick = promptNick(); }
 }
 
 function init() {
@@ -116,7 +122,7 @@ function init() {
 	readLocalStorage();
 
 	/* initalize Librecast context */
-	lctx = new LIBRECAST.Context(librecastCtxReady);
+	lctx = new LIBRECAST.Context(function () { librecastCtxReady(this); });
 
 	initKeyEvents();
 
@@ -408,6 +414,7 @@ function cmd_help(args) {
 /* /nick command - change user nick */
 function cmd_nick(args) {
 	var newnick = args[1];
+	if (typeof newnick === 'undefined') { newnick = promptNick(nick); }
 
 	if (chanselected) {
 		if (nick) {
