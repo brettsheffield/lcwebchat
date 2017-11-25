@@ -41,6 +41,32 @@ var localCache = localStorage;
 var nick = "guest";
 var sockselected;
 
+function initKeyEvents() {
+	/* trap user keypress events */
+	$("#usercmd").keypress(function(e) {
+		if (e.which == KEY_ENTER) {
+			e.preventDefault();
+			handleInput();
+		}
+	});
+
+	/* trap up/down keys for command line history */
+	$("#usercmd").keydown(function(e) {
+		switch (e.which) {
+			case KEY_UP:
+				console.log("UP");
+				e.preventDefault();
+				cmdHistoryGet(cmdIndex + 1);
+				break;
+			case KEY_DOWN:
+				console.log("DOWN");
+				e.preventDefault();
+				cmdHistoryGet(cmdIndex - 1);
+				break;
+		}
+	});
+}
+
 function readLocalStorage() {
 	/* read local storage */
 	if (typeof localCache !== "undefined") {
@@ -80,29 +106,7 @@ function init() {
 	/* initalize Librecast context */
 	lctx = new LIBRECAST.Librecast(librecastCtxReady);
 
-	/* trap user keypress events */
-	$("#usercmd").keypress(function(e) {
-		if (e.which == KEY_ENTER) {
-			e.preventDefault();
-			handleInput();
-		}
-	});
-
-	/* trap up/down keys for command line history */
-	$("#usercmd").keydown(function(e) {
-		switch (e.which) {
-			case KEY_UP:
-				console.log("UP");
-				e.preventDefault();
-				cmdHistoryGet(cmdIndex + 1);
-				break;
-			case KEY_DOWN:
-				console.log("DOWN");
-				e.preventDefault();
-				cmdHistoryGet(cmdIndex - 1);
-				break;
-		}
-	});
+	initKeyEvents();
 
 	/* set focus to user input box */
 	$("#usercmd").focus();
