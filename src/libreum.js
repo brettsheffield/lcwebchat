@@ -29,7 +29,7 @@ var KEY_UP = 38;
 var CMD_HISTORY_LIMIT=32;
 
 var allowedRemoteCmds = [ 'sysmsg' ];
-var channels = [];
+var channelNames = [];
 var chanselected;
 var chansocks = [];
 var cmdCurrent = "";
@@ -47,7 +47,7 @@ function librecastCtxReady() {
 	console.log("librecastCtxReady()");
 
 	/* join any channels we were on last time */
-	channels.forEach(function(name) {
+	channelNames.forEach(function(name) {
 		console.log(name);
 		createChannel(name);
 	});
@@ -87,14 +87,14 @@ function readLocalStorage() {
 
 		if (typeof localCache.channels !== "undefined") {
 			try {
-				channels = JSON.parse(localCache.channels);
+				channelNames = JSON.parse(localCache.channels);
 			}
 			catch(e) {
 				console.log("no channels loaded");
 			}
 		}
-		if (channels.length === 0) {
-			channels = [ channelDefault ];
+		if (channelNames.length === 0) {
+			channelNames = [ channelDefault ];
 			localCache.activeChannel = channelDefault;
 		}
 		if (typeof localCache.nick === 'undefined') {
@@ -102,10 +102,10 @@ function readLocalStorage() {
 			newnick = (newnick === null) ? nick : newnick;
 			cmd_nick([,newnick]);
 		}
-		console.log(channels);
+		console.log(channelNames);
 	}
 	else {
-		channels = [ channelDefault ];
+		channelNames = [ channelDefault ];
 		localCache.activeChannel = channelDefault;
 	}
 }
@@ -192,10 +192,10 @@ function changeChannel(socketid) {
 
 /* remove channel from joined list */
 function deleteChannel(channelName) {
-	for (var i = 0, ii = channels.length; i < ii; i++) {
-		if (channels[i] === channelName.toLowerCase()) {
-			delete channels[i];
-			localCache.channels = JSON.stringify(channels);
+	for (var i = 0, ii = channelNames.length; i < ii; i++) {
+		if (channelNames[i] === channelName.toLowerCase()) {
+			delete channelNames[i];
+			localCache.channels = JSON.stringify(channelNames);
 			break;
 		}
 	}
@@ -210,7 +210,7 @@ function partChannel(channelName) {
 
 	/* change to another channel if leaving active */
 	if (localCache.activeChannel === channelName) {
-		changeChannel(socketidByChannelName(channels[0]));
+		changeChannel(socketidByChannelName(channelNames[0]));
 	}
 
 	/* TODO: close both channel and socket */
@@ -284,9 +284,9 @@ function chanready(cb) {
 	console.log("channel " + chan.name + " is ready");
 	chan.join(joined);
 
-	if (channels.indexOf(chan.name) === -1) {
-		channels.push(chan.name);
-		localCache.channels = JSON.stringify(channels);
+	if (channelNames.indexOf(chan.name) === -1) {
+		channelNames.push(chan.name);
+		localCache.channels = JSON.stringify(channelNames);
 	}
 }
 
@@ -426,8 +426,8 @@ function cmd_nick(args) {
 function cmd_join(args) {
 	var channel = validChannelName(args[1]);
 	writeSysMsg('changing channels to "' + channel + '"');
-	console.log(channels);
-	if (channels.indexOf(channel) === -1) {
+	console.log(channelNames);
+	if (channelNames.indexOf(channel) === -1) {
 		createChannel(channel);
 		localCache.activeChannel = channel;
 	}
@@ -453,7 +453,7 @@ function cmd_part(args) {
 		channelName = chanselected.name;
 	}
 	writeSysMsg('parting channel "' + channelName + '"');
-	if (channels.indexOf(channelName) === -1) {
+	if (channelNames.indexOf(channelName) === -1) {
 		console.log("invalid channel name");
 		return true;
 	}
@@ -487,20 +487,6 @@ function cmd_topic(args, isRemote) {
 	}
 
 	return true;
-}
-
-/* set the topic div in the channel window */
-function updateChannelTopic(topic, socketid) {
-	var divtopic;
-	if (socketid === undefined) {
-		divtopic = $("div.topic.active");
-	}
-	else {
-		divtopic = $("#topic_" + socketid);
-	}
-	if (typeof divtopic !== 'undefined') {
-		divtopic.html("<h1>" + topic + "</h1>");
-	}
 }
 
 /* process any /cmd irc-like commands */
@@ -563,6 +549,20 @@ function handleInput() {
 
 function isRTL() {
 	return $('#usercmd').hasClass('rtl');
+}
+
+/* set the topic div in the channel window */
+function updateChannelTopic(topic, socketid) {
+	var divtopic;
+	if (socketid === undefined) {
+		divtopic = $("div.topic.active");
+	}
+	else {
+		divtopic = $("#topic_" + socketid);
+	}
+	if (typeof divtopic !== 'undefined') {
+		divtopic.html("<h1>" + topic + "</h1>");
+	}
 }
 
 /* write chat message to channel window */
