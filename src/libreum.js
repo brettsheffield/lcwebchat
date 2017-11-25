@@ -42,298 +42,6 @@ var nick = "guest";
 var sockselected;
 
 
-/* callback when Librecast Context is ready */
-function librecastCtxReady(ctx) {
-	console.log("librecastCtxReady()");
-
-	/* join any channels we were on last time */
-	channelNames.forEach(function(name) {
-		createChannel(name);
-	});
-}
-
-function initKeyEvents() {
-	console.log("initKeyEvents()");
-	/* trap user keypress events */
-	$("#usercmd").keypress(function(e) {
-		if (e.which == KEY_ENTER) {
-			e.preventDefault();
-			handleInput();
-		}
-	});
-
-	/* trap up/down keys for command line history */
-	$("#usercmd").keydown(function(e) {
-		switch (e.which) {
-			case KEY_UP:
-				console.log("UP");
-				e.preventDefault();
-				cmdHistoryGet(cmdIndex + 1);
-				break;
-			case KEY_DOWN:
-				console.log("DOWN");
-				e.preventDefault();
-				cmdHistoryGet(cmdIndex - 1);
-				break;
-		}
-	});
-}
-
-/* prompt user for a new nick */
-function promptNick(oldnick) {
-	if (typeof oldnick === 'undefined') { oldnick = "guest"; }
-	console.log("promptNick()");
-	var newnick = prompt('Welcome.  Please choose username ("nick") to continue', oldnick);
-	newnick = (newnick === null) ? nick : newnick;
-	return newnick;
-}
-
-function readLocalStorage() {
-	console.log("readLocalStorage()");
-
-	if (typeof localCache !== "undefined") {
-		nick = localCache.nick;
-
-		if (typeof localCache.channels !== "undefined") {
-			try {
-				channelNames = JSON.parse(localCache.channels);
-			}
-			catch(e) {
-				console.log("no channels loaded");
-			}
-		}
-		if (channelNames.length === 0) {
-			channelNames = [ channelDefault ];
-			localCache.activeChannel = channelDefault;
-		}
-		console.log(channelNames);
-	}
-	else {
-		channelNames = [ channelDefault ];
-		localCache.activeChannel = channelDefault;
-	}
-
-	if (typeof nick === 'undefined') { nick = promptNick(); }
-}
-
-function init() {
-	console.log("init()");
-
-	readLocalStorage();
-
-	/* initalize Librecast context */
-	lctx = new LIBRECAST.Context(function () { librecastCtxReady(this); });
-
-	initKeyEvents();
-
-	/* set focus to user input box */
-	$("#usercmd").focus();
-}
-
-/* clear any local storage */
-function clear() {
-	localStorage.clear();
-	console.log("local storage wiped");
-	return true;
-}
-
-/* return text in user command input box */
-function cmdGet() {
-	return $("#usercmd").val();
-}
-
-/* set text of user command input box */
-function cmdSet(command) {
-	$("#usercmd").val(command);
-}
-
-/* set contents of user input box from user command history */
-function cmdHistoryGet(index) {
-	console.log("cmdHistoryGet(" + index + ")");
-
-	if (index > cmdHistory.length) {
-		index = cmdHistory.length;
-	}
-	else if (index < 0) {
-		console.log("restoring current command");
-		cmdSet(cmdCurrent);
-		cmdIndex = -1;
-		return;
-	}
-	else if (index == 0 && cmdIndex == -1) {
-		console.log("stashing command history");
-		cmdCurrent = cmdGet();
-	}
-	if (typeof cmdHistory[index] !== "undefined") {
-		console.log("getting cmdHistory");
-		cmdSet(cmdHistory[index]);
-		cmdIndex = index;
-	}
-}
-
-/* store command on history stack */
-function cmdHistorySet(cmd) {
-	console.log("cmdHistorySet(" + cmd + ")");
-	cmdHistory.unshift(cmd);
-	if (cmdHistory.length > CMD_HISTORY_LIMIT)
-		cmdHistory.pop();
-}
-
-/* switch between channel panes (sockets) */
-function changeChannel(socketid) {
-	var chatdiv = $('div.chat');
-	chatdiv.find('div.topic').removeClass('active');
-	chatdiv.find('div.socket').removeClass('active');
-	$('div.channels > li.active').removeClass('active');
-	$('#topic_' + socketid).addClass('active');
-	$('#socket_' + socketid).addClass('active');
-	$('#chansock_' + socketid).addClass('active').removeClass('unread');
-
-	chanselected = chansocks[socketid];
-	var channelName = $('#chansock_' + socketid).text();
-	if (channelName) {
-		localCache.activeChannel = channelName;
-	}
-}
-
-/* remove channel from joined list */
-function deleteChannel(channelName) {
-	for (var i = 0, ii = channelNames.length; i < ii; i++) {
-		if (channelNames[i] === channelName.toLowerCase()) {
-			delete channelNames[i];
-			localCache.channels = JSON.stringify(channelNames);
-			break;
-		}
-	}
-}
-
-/* leave (part) channel */
-function partChannel(channelName) {
-	console.log('partChannel(' + channelName + ')');
-	var socketid = socketidByChannelName(channelName);
-
-	deleteChannel(channelName);
-
-	/* change to another channel if leaving active */
-	if (localCache.activeChannel === channelName) {
-		changeChannel(socketidByChannelName(channelNames[0]));
-	}
-
-	/* TODO: close both channel and socket */
-
-	/* drop display elements */
-	$('#socket_' + socketid).remove();
-	$('#chansock_' + socketid).remove();
-}
-
-function socketidByChannelName(channelName) {
-	var chansock = $('li:contains(' + channelName + ')');
-	var socketid = chansock.attr('id').split('_')[1];
-	return socketid;
-}
-
-/* check channel name validity */
-function validChannelName(channelName) {
-	if (typeof channelName === 'undefined') {
-		return false;
-	}
-
-	// trim whitespace
-	channelName = channelName.replace(/^s+|s+$/g, '');
-
-	/* for now, just insist it starts with a hash */
-	if (channelName[0] !== '#') {
-		channelName = '#' + channelName;
-	}
-
-	/* name must have at least one character + leading hash */
-	if (channelName.length < 2) {
-		return false;
-	}
-
-	return channelName.toLowerCase();
-}
-
-/* create a new chat channel
- * In Librecast terms, this means we set up a chain of callbacks to:
- * 1) create a new socket and channel
- * 2) join the channel when it's ready
- * 3) bind the channel to the socket
- * 4) listen on the socket
- * we also need to create a div to display any channel contents
- * and update our channel list */
-function createChannel(channelName) {
-	if (!channelName) {
-		writeSysMsg("'" + channelName + "' not a valid channel name");
-		return false;
-	}
-	channelName = validChannelName(channelName);
-	var disarray = [];
-	var sock = new lc.Socket(lctx, sockready);
-	var chan = new lc.Channel(lctx, channelName, chanready);
-	disarray.push(sock.defer);
-	disarray.push(chan.defer);
-
-	$.when.apply($, disarray).done(function() {
-		console.log("socket and channel both ready (" + chan.name + ")");
-		console.log("socket id=" + sock.id);
-		console.log("channel id=" + chan.id);
-		chan.bind(sock, bound);
-	});
-}
-
-/* callback when Librecast.Channel is created
- * Note: this doesn't mean the socket is ready, 
- * or that we are listening to this channel */
-function chanready(cb) {
-	var chan = cb.obj;
-	console.log("channel " + chan.name + " is ready");
-	chan.join(joined);
-
-	if (channelNames.indexOf(chan.name) === -1) {
-		channelNames.push(chan.name);
-		localCache.channels = JSON.stringify(channelNames);
-	}
-}
-
-function gottopic(obj, opcode, len, id, token, msg) {
-	updateChannelTopic(msg, obj.obj.id);
-}
-
-/* callback when Librecast.Socket is created */
-function sockready(cb) {
-	console.log("my socket is ready");
-	var sock = cb.obj;
-	sock.listen(gotmail);
-}
-
-/* create/update channel elements */
-function prepChannelElements(chan) {
-	var chansock = $('li:contains(' + chan.name + ')');
-	var socketid = chan.id2;
-	if (chansock.length) {
-		/* update socketids for existing channel */
-		var oldsockid = chansock.attr('id').split('_')[1];
-		$('li#chansock_' + oldsockid).attr('id', 'chansock_' + socketid);
-		$('div#socket_' + oldsockid).attr('id', 'socket_' + socketid);
-		$('div#topic_' + oldsockid).attr('id', 'topic_' + socketid);
-	}
-	else {
-		/* create socket pane */
-		var chatdiv = $('div.chat');
-		chatdiv.append('<div id="topic_' + socketid + '" class="topic"></div>');
-		chatdiv.append('<div id="socket_' + socketid + '" class="socket"></div>');
-		chansock = $('<li id="chansock_' + socketid  + '">' + chan.name + '</li>');
-		$('div.channels').append(chansock);
-		chansock.on('click', function() {
-				var socketid = $(this).attr('id').split('_')[1];
-				changeChannel(socketid);
-		});
-	}
-	if (localCache.activeChannel == chan.name)
-		changeChannel(socketid);
-}
-
 /* callback when Librecast.Channel is bound to Librecast.Socket */
 function bound(cb) {
 	var chan = cb.obj;
@@ -353,46 +61,17 @@ function bound(cb) {
 	chan.getmsg(gotresult);
 }
 
-function joined(cb) {
+/* callback when Librecast.Channel is created
+ * Note: this doesn't mean the socket is ready, 
+ * or that we are listening to this channel */
+function chanready(cb) {
 	var chan = cb.obj;
-	console.log("channel " + chan.name + " joined");
-	chan.send('/sysmsg ' + nick + ' has joined ' + chan.name);
-}
+	console.log("channel " + chan.name + " is ready");
+	chan.join(joined);
 
-/* callback when message received on Librecast.Socket */
-function gotmail(obj, opcode, len, id, token, key, val, timestamp) {
-	console.log("gotmail()");
-	var socketid = obj.obj.id;
-	if (opcode === lc.OP_SOCKET_MSG) {
-		if (!handleCmd(val, true)) {
-			writeMsg(val, socketid, timestamp);
-		}
-	}
-	else if (opcode === lc.OP_CHANNEL_GETVAL) {
-		/* TODO: check key */
-		updateChannelTopic(val, socketid);
-	}
-	else if (opcode === lc.OP_CHANNEL_SETVAL) {
-		if (key == 'topic') {
-			updateChannelTopic(val, socketid);
-		}
-		else {
-			console.log("ignoring unknown key '" + key + "'");
-		}
-	}
-}
-
-function gotresult(obj, opcode, len, id, token, key, val, timestamp) {
-	var socketid = obj.obj.id2;
-
-	if (typeof gotresult.count === 'undefined') {
-		gotresult.count = 0;
-	}
-	console.log("socket " + id + ": got a message result " + ++gotresult.count);
-	console.log(val);
-
-	if (val.substring(0,1) != '/' && val !== 'topic') {
-		writeMsg(val, socketid, timestamp);
+	if (channelNames.indexOf(chan.name) === -1) {
+		channelNames.push(chan.name);
+		localCache.channels = JSON.stringify(channelNames);
 	}
 }
 
@@ -496,6 +175,145 @@ function cmd_topic(args, isRemote) {
 	return true;
 }
 
+/* return text in user command input box */
+function cmdGet() {
+	return $("#usercmd").val();
+}
+
+/* set text of user command input box */
+function cmdSet(command) {
+	$("#usercmd").val(command);
+}
+
+/* set contents of user input box from user command history */
+function cmdHistoryGet(index) {
+	console.log("cmdHistoryGet(" + index + ")");
+
+	if (index > cmdHistory.length) {
+		index = cmdHistory.length;
+	}
+	else if (index < 0) {
+		console.log("restoring current command");
+		cmdSet(cmdCurrent);
+		cmdIndex = -1;
+		return;
+	}
+	else if (index == 0 && cmdIndex == -1) {
+		console.log("stashing command history");
+		cmdCurrent = cmdGet();
+	}
+	if (typeof cmdHistory[index] !== "undefined") {
+		console.log("getting cmdHistory");
+		cmdSet(cmdHistory[index]);
+		cmdIndex = index;
+	}
+}
+
+/* store command on history stack */
+function cmdHistorySet(cmd) {
+	console.log("cmdHistorySet(" + cmd + ")");
+	cmdHistory.unshift(cmd);
+	if (cmdHistory.length > CMD_HISTORY_LIMIT)
+		cmdHistory.pop();
+}
+
+/* switch between channel panes (sockets) */
+function changeChannel(socketid) {
+	var chatdiv = $('div.chat');
+	chatdiv.find('div.topic').removeClass('active');
+	chatdiv.find('div.socket').removeClass('active');
+	$('div.channels > li.active').removeClass('active');
+	$('#topic_' + socketid).addClass('active');
+	$('#socket_' + socketid).addClass('active');
+	$('#chansock_' + socketid).addClass('active').removeClass('unread');
+
+	chanselected = chansocks[socketid];
+	var channelName = $('#chansock_' + socketid).text();
+	if (channelName) {
+		localCache.activeChannel = channelName;
+	}
+}
+
+/* create a new chat channel
+ * In Librecast terms, this means we set up a chain of callbacks to:
+ * 1) create a new socket and channel
+ * 2) join the channel when it's ready
+ * 3) bind the channel to the socket
+ * 4) listen on the socket
+ * we also need to create a div to display any channel contents
+ * and update our channel list */
+function createChannel(channelName) {
+	if (!channelName) {
+		writeSysMsg("'" + channelName + "' not a valid channel name");
+		return false;
+	}
+	channelName = validChannelName(channelName);
+	var disarray = [];
+	var sock = new lc.Socket(lctx, sockready);
+	var chan = new lc.Channel(lctx, channelName, chanready);
+	disarray.push(sock.defer);
+	disarray.push(chan.defer);
+
+	$.when.apply($, disarray).done(function() {
+		console.log("socket and channel both ready (" + chan.name + ")");
+		console.log("socket id=" + sock.id);
+		console.log("channel id=" + chan.id);
+		chan.bind(sock, bound);
+	});
+}
+
+/* remove channel from joined list */
+function deleteChannel(channelName) {
+	for (var i = 0, ii = channelNames.length; i < ii; i++) {
+		if (channelNames[i] === channelName.toLowerCase()) {
+			delete channelNames[i];
+			localCache.channels = JSON.stringify(channelNames);
+			break;
+		}
+	}
+}
+
+/* callback when message received on Librecast.Socket */
+function gotmail(obj, opcode, len, id, token, key, val, timestamp) {
+	console.log("gotmail()");
+	var socketid = obj.obj.id;
+	if (opcode === lc.OP_SOCKET_MSG) {
+		if (!handleCmd(val, true)) {
+			writeMsg(val, socketid, timestamp);
+		}
+	}
+	else if (opcode === lc.OP_CHANNEL_GETVAL) {
+		/* TODO: check key */
+		updateChannelTopic(val, socketid);
+	}
+	else if (opcode === lc.OP_CHANNEL_SETVAL) {
+		if (key == 'topic') {
+			updateChannelTopic(val, socketid);
+		}
+		else {
+			console.log("ignoring unknown key '" + key + "'");
+		}
+	}
+}
+
+function gotresult(obj, opcode, len, id, token, key, val, timestamp) {
+	var socketid = obj.obj.id2;
+
+	if (typeof gotresult.count === 'undefined') {
+		gotresult.count = 0;
+	}
+	console.log("socket " + id + ": got a message result " + ++gotresult.count);
+	console.log(val);
+
+	if (val.substring(0,1) != '/' && val !== 'topic') {
+		writeMsg(val, socketid, timestamp);
+	}
+}
+
+function gottopic(obj, opcode, len, id, token, msg) {
+	updateChannelTopic(msg, obj.obj.id);
+}
+
 /* process any /cmd irc-like commands */
 function handleCmd(cmd, isRemote) {
 	if (cmd.substring(0,1) != '/')
@@ -523,7 +341,7 @@ function handleCmd(cmd, isRemote) {
 	case "part":
 		return cmd_part(args);
 	case "reset":
-		clear();
+		localStorage.clear();
 		break;
 	case "rtl":
 		return cmd_rtl(args);
@@ -554,8 +372,186 @@ function handleInput() {
 	cmdCurrent = "";
 }
 
+function init() {
+	console.log("init()");
+
+	readLocalStorage();
+
+	/* initalize Librecast context */
+	lctx = new LIBRECAST.Context(function () { librecastCtxReady(this); });
+
+	initKeyEvents();
+
+	/* set focus to user input box */
+	$("#usercmd").focus();
+}
+
 function isRTL() {
 	return $('#usercmd').hasClass('rtl');
+}
+
+function initKeyEvents() {
+	console.log("initKeyEvents()");
+
+	/* trap user keypress events */
+	$("#usercmd").keypress(function(e) {
+		if (e.which == KEY_ENTER) {
+			e.preventDefault();
+			handleInput();
+		}
+	});
+
+	/* trap up/down keys for command line history */
+	$("#usercmd").keydown(function(e) {
+		switch (e.which) {
+			case KEY_UP:
+				console.log("UP");
+				e.preventDefault();
+				cmdHistoryGet(cmdIndex + 1);
+				break;
+			case KEY_DOWN:
+				console.log("DOWN");
+				e.preventDefault();
+				cmdHistoryGet(cmdIndex - 1);
+				break;
+		}
+	});
+}
+
+function joined(cb) {
+	var chan = cb.obj;
+	console.log("channel " + chan.name + " joined");
+	chan.send('/sysmsg ' + nick + ' has joined ' + chan.name);
+}
+
+/* callback when Librecast Context is ready */
+function librecastCtxReady(ctx) {
+	console.log("librecastCtxReady()");
+
+	/* join any channels we were on last time */
+	channelNames.forEach(function(name) {
+		createChannel(name);
+	});
+}
+
+/* leave (part) channel */
+function partChannel(channelName) {
+	console.log('partChannel(' + channelName + ')');
+	var socketid = socketidByChannelName(channelName);
+
+	deleteChannel(channelName);
+
+	/* change to another channel if leaving active */
+	if (localCache.activeChannel === channelName) {
+		changeChannel(socketidByChannelName(channelNames[0]));
+	}
+
+	/* TODO: close both channel and socket */
+
+	/* drop display elements */
+	$('#socket_' + socketid).remove();
+	$('#chansock_' + socketid).remove();
+}
+
+/* prompt user f/* create/update channel elements */
+function prepChannelElements(chan) {
+	var chansock = $('li:contains(' + chan.name + ')');
+	var socketid = chan.id2;
+	if (chansock.length) {
+		/* update socketids for existing channel */
+		var oldsockid = chansock.attr('id').split('_')[1];
+		$('li#chansock_' + oldsockid).attr('id', 'chansock_' + socketid);
+		$('div#socket_' + oldsockid).attr('id', 'socket_' + socketid);
+		$('div#topic_' + oldsockid).attr('id', 'topic_' + socketid);
+	}
+	else {
+		/* create socket pane */
+		var chatdiv = $('div.chat');
+		chatdiv.append('<div id="topic_' + socketid + '" class="topic"></div>');
+		chatdiv.append('<div id="socket_' + socketid + '" class="socket"></div>');
+		chansock = $('<li id="chansock_' + socketid  + '">' + chan.name + '</li>');
+		$('div.channels').append(chansock);
+		chansock.on('click', function() {
+				var socketid = $(this).attr('id').split('_')[1];
+				changeChannel(socketid);
+		});
+	}
+	if (localCache.activeChannel == chan.name)
+		changeChannel(socketid);
+}
+
+/*prompt for a new nick */
+function promptNick(oldnick) {
+	console.log("promptNick()");
+
+	if (typeof oldnick === 'undefined') { oldnick = "guest"; }
+	console.log("promptNick()");
+	var newnick = prompt('Welcome.  Please choose username ("nick") to continue', oldnick);
+	newnick = (newnick === null) ? nick : newnick;
+	return newnick;
+}
+
+function readLocalStorage() {
+	console.log("readLocalStorage()");
+
+	if (typeof localCache !== "undefined") {
+		nick = localCache.nick;
+
+		if (typeof localCache.channels !== "undefined") {
+			try {
+				channelNames = JSON.parse(localCache.channels);
+			}
+			catch(e) {
+				console.log("no channels loaded");
+			}
+		}
+		if (channelNames.length === 0) {
+			channelNames = [ channelDefault ];
+			localCache.activeChannel = channelDefault;
+		}
+		console.log(channelNames);
+	}
+	else {
+		channelNames = [ channelDefault ];
+		localCache.activeChannel = channelDefault;
+	}
+
+	if (typeof nick === 'undefined') { nick = promptNick(); }
+}
+
+function socketidByChannelName(channelName) {
+	var chansock = $('li:contains(' + channelName + ')');
+	var socketid = chansock.attr('id').split('_')[1];
+	return socketid;
+}
+
+/* check/* callback when Librecast.Socket is created */
+function sockready(cb) {
+	console.log("my socket is ready");
+	var sock = cb.obj;
+	sock.listen(gotmail);
+}
+
+/* check channel name validity */
+function validChannelName(channelName) {
+	if (typeof channelName === 'undefined') {
+		return false;
+	}
+
+	// trim whitespace
+	channelName = channelName.replace(/^s+|s+$/g, '');
+
+	/* for now, just insist it starts with a hash */
+	if (channelName[0] !== '#') {
+		channelName = '#' + channelName;
+	}
+
+	/* name must have at least one character + leading hash */
+	if (channelName.length < 2) {
+		return false;
+	}
+
+	return channelName.toLowerCase();
 }
 
 /* set the topic div in the channel window */
