@@ -41,6 +41,18 @@ var localCache = localStorage;
 var nick = "guest";
 var sockselected;
 
+
+/* callback when Librecast Context is ready */
+function librecastCtxReady() {
+	console.log("librecastCtxReady()");
+
+	/* join any channels we were on last time */
+	channels.forEach(function(name) {
+		console.log(name);
+		createChannel(name);
+	});
+}
+
 function initKeyEvents() {
 	/* trap user keypress events */
 	$("#usercmd").keypress(function(e) {
@@ -104,7 +116,7 @@ function init() {
 	readLocalStorage();
 
 	/* initalize Librecast context */
-	lctx = new LIBRECAST.Librecast(librecastCtxReady);
+	lctx = new LIBRECAST.Context(librecastCtxReady);
 
 	initKeyEvents();
 
@@ -159,17 +171,6 @@ function cmdHistorySet(cmd) {
 	cmdHistory.unshift(cmd);
 	if (cmdHistory.length > CMD_HISTORY_LIMIT)
 		cmdHistory.pop();
-}
-
-/* callback when Librecast Context is ready */
-function librecastCtxReady() {
-	console.log("librecastCtxReady()");
-
-	/* join any channels we were on last time */
-	channels.forEach(function(name) {
-		console.log(name);
-		createChannel(name);
-	});
 }
 
 /* switch between channel panes (sockets) */
@@ -262,8 +263,8 @@ function createChannel(channelName) {
 	}
 	channelName = validChannelName(channelName);
 	var disarray = [];
-	var sock = new lc.LibrecastSocket(lctx, sockready);
-	var chan = new lc.LibrecastChannel(lctx, channelName, chanready);
+	var sock = new lc.Socket(lctx, sockready);
+	var chan = new lc.Channel(lctx, channelName, chanready);
 	disarray.push(sock.defer);
 	disarray.push(chan.defer);
 
@@ -275,7 +276,7 @@ function createChannel(channelName) {
 	});
 }
 
-/* callback when LibrecastChannel is created
+/* callback when Librecast.Channel is created
  * Note: this doesn't mean the socket is ready, 
  * or that we are listening to this channel */
 function chanready(cb) {
@@ -293,7 +294,7 @@ function gottopic(obj, opcode, len, id, token, msg) {
 	updateChannelTopic(msg, obj.obj.id);
 }
 
-/* callback when LibrecastSocket is created */
+/* callback when Librecast.Socket is created */
 function sockready(cb) {
 	console.log("my socket is ready");
 	var sock = cb.obj;
@@ -327,7 +328,7 @@ function prepChannelElements(chan) {
 		changeChannel(socketid);
 }
 
-/* callback when LibrecastChannel is bound to LibrecastSocket */
+/* callback when Librecast.Channel is bound to Librecast.Socket */
 function bound(cb) {
 	var chan = cb.obj;
 	chansocks[chan.id2] = chan;
@@ -352,7 +353,7 @@ function joined(cb) {
 	chan.send('/sysmsg ' + nick + ' has joined ' + chan.name);
 }
 
-/* callback when message received on LibrecastSocket */
+/* callback when message received on Librecast.Socket */
 function gotmail(obj, opcode, len, id, token, key, val, timestamp) {
 	console.log("gotmail()");
 	var socketid = obj.obj.id;
