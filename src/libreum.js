@@ -480,7 +480,7 @@ function prepChannelElements(chan) {
 		changeChannel(socketid);
 }
 
-/*prompt for a new nick */
+/* prompt for a new nick */
 function promptNick(oldnick) {
 	console.log("promptNick()");
 
@@ -516,7 +516,7 @@ function readLocalStorage() {
 		localCache.activeChannel = channelDefault;
 	}
 
-	if (typeof nick === 'undefined') { nick = promptNick(); }
+	if (typeof nick === 'undefined') { cmd_nick([, promptNick()]); }
 }
 
 function socketidByChannelName(channelName) {
