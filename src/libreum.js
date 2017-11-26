@@ -28,6 +28,9 @@ var KEY_DOWN = 40;
 var KEY_UP = 38;
 var CMD_HISTORY_LIMIT=32;
 
+var MSG_TYPE_JOIN = 1;
+var MSG_TYPE_PART = 2;
+
 var allowedRemoteCmds = [ 'sysmsg' ];
 var channelNames = [];
 var chanselected;
@@ -109,6 +112,13 @@ Message.prototype.parse = function(jsonString) {
 	for (var key in obj) {
 		this[key] = obj[key];
 	}
+	return this;
+};
+
+/* get/set message type */
+Message.prototype.type = function(type) {
+	if (typeof type === 'undefined') { return this.type; }
+	this.type = type;
 	return this;
 };
 
@@ -335,23 +345,40 @@ function deleteChannel(channelName) {
 }
 
 /* callback when message received on Librecast.Socket */
-function gotmail(obj, opcode, len, id, token, key, val, timestamp) {
+function gotmail(cb, opcode, len, id, token, key, val, timestamp) {
 	console.log("gotmail()");
-	var socketid = obj.obj.id;
+	var sock = cb.obj;
+	var chan = chansocks[sock.id];
+	var msg;
 
 	if (opcode === lc.OP_SOCKET_MSG) {
 		if (!handleCmd(val, true)) {
-			var msg = new Message().parse(val);
-			writeMsg(msg, socketid, timestamp);
+			try {
+				msg = new Message().parse(val);
+			}
+			catch(e) {
+				console.log(e);
+				return false;
+			}
+			switch (msg.type) {
+				case MSG_TYPE_JOIN:
+					writeSysMsg(msg.nick + " has joined " + chan.name, sock.id);
+					break;
+				case MSG_TYPE_PART:
+					writeSysMsg(msg.nick + " has left " + chan.name, sock.id);
+					break;
+				default:
+					writeMsg(msg, sock.id, timestamp);
+			}
 		}
 	}
 	else if (opcode === lc.OP_CHANNEL_GETVAL) {
 		/* TODO: check key */
-		updateChannelTopic(val, socketid);
+		updateChannelTopic(val, sock.id);
 	}
 	else if (opcode === lc.OP_CHANNEL_SETVAL) {
 		if (key == 'topic') {
-			updateChannelTopic(val, socketid);
+			updateChannelTopic(val, sock.id);
 		}
 		else {
 			console.log("ignoring unknown key '" + key + "'");
@@ -359,8 +386,8 @@ function gotmail(obj, opcode, len, id, token, key, val, timestamp) {
 	}
 }
 
-function gotresult(obj, opcode, len, id, token, key, val, timestamp) {
-	var socketid = obj.obj.id2;
+function gotresult(cb, opcode, len, id, token, key, val, timestamp) {
+	var socketid = cb.obj.id2;
 
 	if (typeof gotresult.count === 'undefined') {
 		gotresult.count = 0;
@@ -386,7 +413,7 @@ function gottopic(obj, opcode, len, id, token, msg) {
 function handleCmd(cmd, isRemote) {
 	if (cmd.substring(0,1) != '/')
 		return false;
-	
+
 	var args = cmd.split(' ');
 	var command = args[0].substring(1);
 
@@ -489,8 +516,8 @@ function initKeyEvents() {
 
 function joined(cb) {
 	var chan = cb.obj;
-	console.log("channel " + chan.name + " joined");
-	chan.send('/sysmsg ' + nick + ' has joined ' + chan.name);
+	var msg = new Message().type(MSG_TYPE_JOIN);
+	chan.send(JSON.stringify(msg));
 }
 
 /* callback when Librecast Context is ready */
@@ -644,6 +671,9 @@ function writeMsg(unsafestr, socketid, timestamp) {
 	if (typeof unsafestr === 'object') {
 		if (typeof unsafestr.text !== 'undefined') {
 			msg = $('<div>').text(unsafestr.format()).html();
+		}
+		else {
+			return false;
 		}
 	}
 	else {
