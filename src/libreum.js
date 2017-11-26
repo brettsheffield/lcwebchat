@@ -46,11 +46,10 @@ var sockselected;
  * ChatPane -  a chat window
  * binds one or more Librecast.Channels to a Librecast.Socket
  * @constructor
- * @param {string} name			- name of the window
  * @param {string} channelName	- The name of a channel to bind
  * there can be any number of channelName params.
  */
-function ChatPane(name) {
+function ChatPane() {
 	var self = this;
 	this.channels = [];
 
@@ -62,7 +61,7 @@ function ChatPane(name) {
 	for (var i = 0; i < arguments.length; i++) {
 		var chan;
 		try {
-			chan = new LIBRECAST.Channel(lctx, arguments[i], chanready);
+			chan = new LIBRECAST.Channel(lctx, arguments[i], channelReady);
 			chan.chatPane = this;
 		}
 		catch(e) {
@@ -78,7 +77,7 @@ function ChatPane(name) {
 	var socket = this.socket;
 	this.channels.forEach(function(chan) {
 		$.when(socket.defer, chan.defer).done(function () {
-			chan.bindSocket(socket);
+			chan.bindSocket(socket, channelBound);
 		});
 	});
 
@@ -94,7 +93,7 @@ ChatPane.prototype.onReady = function() {
 
 
 /* callback when Librecast.Channel is bound to Librecast.Socket */
-LIBRECAST.Channel.prototype.bound = function () {
+var channelBound = function () {
 	var chan = this;
 	chansocks[chan.id2] = chan;
 	if ((localCache.activeChannel == chan.name) || (typeof chanselected === 'undefined'))
@@ -115,7 +114,7 @@ LIBRECAST.Channel.prototype.bound = function () {
 /* callback when Librecast.Channel is created
  * Note: this doesn't mean the socket is ready, 
  * or that we are listening to this channel */
-function chanready(cb) {
+var channelReady = function(cb) {
 	var chan = cb.obj;
 	console.log("channel " + chan.name + " is ready");
 	chan.join(joined);
@@ -124,7 +123,7 @@ function chanready(cb) {
 		channelNames.push(chan.name);
 		localCache.channels = JSON.stringify(channelNames);
 	}
-}
+};
 
 /* /help command - print some help info */
 function cmd_help(args) {
