@@ -63,8 +63,10 @@ function ChatPane(name) {
 		var chan;
 		try {
 			chan = new LIBRECAST.Channel(lctx, arguments[i], chanready);
+			chan.chatPane = this;
 		}
 		catch(e) {
+			console.log(e);
 			console.log("unable to create channel " + arguments[i]);
 			continue;
 		}
@@ -76,7 +78,7 @@ function ChatPane(name) {
 	var socket = this.socket;
 	this.channels.forEach(function(chan) {
 		$.when(socket.defer, chan.defer).done(function () {
-			chan.bind(socket, bound); /* FIXME: only create one pane per ChatPane */
+			chan.bindSocket(socket);
 		});
 	});
 
@@ -92,8 +94,8 @@ ChatPane.prototype.onReady = function() {
 
 
 /* callback when Librecast.Channel is bound to Librecast.Socket */
-function bound(cb) {
-	var chan = cb.obj;
+LIBRECAST.Channel.prototype.bound = function () {
+	var chan = this;
 	chansocks[chan.id2] = chan;
 	if ((localCache.activeChannel == chan.name) || (typeof chanselected === 'undefined'))
 		changeChannel(chan.id2);
@@ -108,7 +110,7 @@ function bound(cb) {
 
 	/* fetch channel history */
 	chan.getmsg(gotresult);
-}
+};
 
 /* callback when Librecast.Channel is created
  * Note: this doesn't mean the socket is ready, 
@@ -326,6 +328,7 @@ function deleteChannel(channelName) {
 function gotmail(obj, opcode, len, id, token, key, val, timestamp) {
 	console.log("gotmail()");
 	var socketid = obj.obj.id;
+
 	if (opcode === lc.OP_SOCKET_MSG) {
 		if (!handleCmd(val, true)) {
 			writeMsg(val, socketid, timestamp);
@@ -536,7 +539,6 @@ function promptNick(oldnick) {
 	console.log("promptNick()");
 
 	if (typeof oldnick === 'undefined') { oldnick = "guest"; }
-	console.log("promptNick()");
 	var newnick = prompt('Welcome.  Please choose username ("nick") to continue', oldnick);
 	newnick = (newnick === null) ? nick : newnick;
 	return newnick;
