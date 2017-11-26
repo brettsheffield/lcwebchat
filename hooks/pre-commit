@@ -1,8 +1,10 @@
 #!/bin/sh
 
-if [ `wc -l js/libreum.min.js | awk '{ print $1 }'` -gt 1 ];
+MINFILE=js/libreum.min.js
+
+if [ `wc -l ${MINFILE} | awk '{ print $1 }'` -gt 1 ];
 then
-	echo "js/libreum.min.js not minified.  Aborting commit."
+	echo "${MINFILE} not minified.  Aborting commit."
 	exit 1
 fi
 
