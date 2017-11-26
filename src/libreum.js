@@ -55,7 +55,6 @@ var sockselected;
 function ChatPane() {
 	var self = this;
 	this.channels = [];
-	this.users = [];
 
 	/* create socket */
 	this.socket = new LIBRECAST.Socket(lctx, sockready);
@@ -95,6 +94,52 @@ ChatPane.prototype.onReady = function() {
 	console.log("ChatPane.onReady()");
 };
 
+
+function User(nick) {
+	this.nick = nick;
+}
+
+/* record a user sighting */
+User.prototype.seen = function(timestamp) {
+	this.lastSeen = new Date(timestamp);
+	return this;
+};
+
+
+/* get/set userStatus */
+LIBRECAST.Channel.prototype.userStatus = function (nick, status) {
+	if (typeof this.users === "undefined") { this.users = []; }
+	if (typeof status === "undefined") { return this.users[nick]; }
+
+	this.users[nick] = new User(nick).seen();
+
+	return this;
+};
+
+/* user has joined the channel - make a note */
+LIBRECAST.Channel.prototype.userJoin = function(nick) {
+
+	var socketid = this.id2;
+
+	if (typeof this.userStatus(nick) === "undefined") {
+		this.users[nick] = new User(nick);
+		writeSysMsg(nick + " has joined " + this.name, socketid);
+	}
+
+	return this;
+};
+
+/* user has left the channel */
+LIBRECAST.Channel.prototype.userPart = function(nick) {
+
+	var socketid = this.id2;
+
+	if (typeof this.userStatus(nick) === "undefined") {
+		this.users[nick] = new User(nick);
+		writeSysMsg(nick + " has left " + this.name, socketid);
+	}
+
+};
 
 function Message(text) {
 	this.nick = nick;
@@ -362,10 +407,10 @@ function gotmail(cb, opcode, len, id, token, key, val, timestamp) {
 			}
 			switch (msg.type) {
 				case MSG_TYPE_JOIN:
-					writeSysMsg(msg.nick + " has joined " + chan.name, sock.id);
+					chan.userJoin(msg.nick);
 					break;
 				case MSG_TYPE_PART:
-					writeSysMsg(msg.nick + " has left " + chan.name, sock.id);
+					chan.userPart(msg.nick);
 					break;
 				default:
 					writeMsg(msg, sock.id, timestamp);
@@ -536,6 +581,7 @@ function librecastCtxReady(ctx) {
 function partChannel(channelName) {
 	console.log('partChannel(' + channelName + ')');
 	var socketid = socketidByChannelName(channelName);
+	var chan = chansocks[socketid];
 
 	deleteChannel(channelName);
 
@@ -543,6 +589,10 @@ function partChannel(channelName) {
 	if (localCache.activeChannel === channelName) {
 		changeChannel(socketidByChannelName(channelNames[0]));
 	}
+
+	/* tell the channel we're leaving */
+	var msg = new Message().type(MSG_TYPE_PART);
+	chan.send(JSON.stringify(msg));
 
 	/* TODO: close both channel and socket */
 
@@ -685,9 +735,18 @@ function updateChannelTopic(topic, socketid) {
 /* write chat message to channel window */
 function writeMsg(unsafestr, socketid, timestamp) {
 	var msg;
+	var chan = chansocks[socketid];
 	if (typeof unsafestr === 'object') {
 		if (typeof unsafestr.text !== 'undefined') {
 			msg = $('<div>').text(unsafestr.format()).html();
+		}
+		else if (unsafestr.type === MSG_TYPE_JOIN) {
+			writeSysMsg(unsafestr.nick + " has joined " + chan.name, socketid, timestamp);
+			return;
+		}
+		else if (unsafestr.type === MSG_TYPE_PART) {
+			writeSysMsg(unsafestr.nick + " has left " + chan.name, socketid, timestamp);
+			return;
 		}
 		else {
 			return false;
@@ -703,9 +762,9 @@ function writeMsg(unsafestr, socketid, timestamp) {
 }
 
 /* write system message to active channel window */
-function writeSysMsg(unsafestr, socketid) {
+function writeSysMsg(unsafestr, socketid, timestamp) {
 	var msg = $('<div>').text(unsafestr).html();
-	var datetime = timestampFormat();
+	var datetime = timestampFormat(timestamp);
 	var sysmsg = '<pre><span class="sysmsg">' + datetime + msg + '</span></pre>';
 	writeChannel(sysmsg, socketid);
 }
