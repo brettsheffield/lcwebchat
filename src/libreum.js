@@ -52,6 +52,7 @@ var sockselected;
 function ChatPane() {
 	var self = this;
 	this.channels = [];
+	this.users = [];
 
 	/* create socket */
 	this.socket = new LIBRECAST.Socket(lctx, sockready);
@@ -298,18 +299,8 @@ function createChannel(channelName) {
 		return false;
 	}
 	channelName = validChannelName(channelName);
-	var disarray = [];
-	var sock = new lc.Socket(lctx, sockready);
-	var chan = new lc.Channel(lctx, channelName, chanready);
-	disarray.push(sock.defer);
-	disarray.push(chan.defer);
 
-	$.when.apply($, disarray).done(function() {
-		console.log("socket and channel both ready (" + chan.name + ")");
-		console.log("socket id=" + sock.id);
-		console.log("channel id=" + chan.id);
-		chan.bind(sock, bound);
-	});
+	lctx.chatPanes.push(new ChatPane(channelName));
 }
 
 /* remove channel from joined list */
