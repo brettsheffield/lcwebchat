@@ -629,6 +629,23 @@ function sockready(cb) {
 	sock.listen(gotmail);
 }
 
+function timestampFormat(timestamp) {
+	/* timestamp message */
+	var d = (typeof timestamp === 'undefined' || timestamp === 0) ? new Date() : new Date(timestamp);
+	var month = ("0" + (d.getMonth() + 1)).slice(-2);
+	var day = ("0" + d.getDate()).slice(-2);
+	var hours = ("0" + d.getHours()).slice(-2);
+	var minutes = ("0" + d.getMinutes()).slice(-2);
+	var seconds = ("0" + d.getSeconds()).slice(-2);
+
+	/* formatting is mostly CSS, but also use a non-breaking space so cut and paste is legible */
+	var date = '<span class="datestamp">' + d.getFullYear() + '-' + month + '-' + day + '&nbsp;</span>';
+	var time = '<span class="timestamp">' + hours + ':' + minutes + ':' + seconds + '&nbsp;</span>';
+
+	return date + time;
+}
+
+
 /* check channel name validity */
 function validChannelName(channelName) {
 	if (typeof channelName === 'undefined') {
@@ -680,18 +697,8 @@ function writeMsg(unsafestr, socketid, timestamp) {
 		msg = $('<div>').text(unsafestr).html();
 	}
 
-	/* timestamp message */
-	var d = (typeof timestamp === 'undefined' || timestamp === 0) ? new Date() : new Date(timestamp);
-	var month = ("0" + (d.getMonth() + 1)).slice(-2);
-	var day = ("0" + d.getDate()).slice(-2);
-	var hours = ("0" + d.getHours()).slice(-2);
-	var minutes = ("0" + d.getMinutes()).slice(-2);
-	var seconds = ("0" + d.getSeconds()).slice(-2);
-
-	/* formatting is mostly CSS, but also use a non-breaking space so cut and paste is legible */
-	var date = '<span class="datestamp">' + d.getFullYear() + '-' + month + '-' + day + '&nbsp;</span>';
-	var time = '<span class="timestamp">' + hours + ':' + minutes + ':' + seconds + '&nbsp;</span>';
-	var line = '<p><span class="msg">' + date + time + msg + '</span></p>';
+	var datetime = timestampFormat(timestamp);
+	var line = '<p><span class="msg">' + datetime + msg + '</span></p>';
 	writeChannel(line, socketid);
 }
 
