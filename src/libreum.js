@@ -93,6 +93,26 @@ ChatPane.prototype.onReady = function() {
 };
 
 
+function Message(text) {
+	this.nick = nick;
+	this.text = text;
+}
+
+Message.prototype.format = function() {
+	return '<' + this.nick + '> ' + this.text;
+};
+
+Message.prototype.parse = function(jsonString) {
+	var obj = JSON.parse(jsonString);
+
+	// copy properties from JSON
+	for (var key in obj) {
+		this[key] = obj[key];
+	}
+	return this;
+};
+
+
 /* callback when Librecast.Channel is bound to Librecast.Socket */
 var channelBound = function () {
 	var chan = this;
@@ -321,7 +341,8 @@ function gotmail(obj, opcode, len, id, token, key, val, timestamp) {
 
 	if (opcode === lc.OP_SOCKET_MSG) {
 		if (!handleCmd(val, true)) {
-			writeMsg(val, socketid, timestamp);
+			var msg = new Message().parse(val);
+			writeMsg(msg, socketid, timestamp);
 		}
 	}
 	else if (opcode === lc.OP_CHANNEL_GETVAL) {
@@ -345,11 +366,16 @@ function gotresult(obj, opcode, len, id, token, key, val, timestamp) {
 		gotresult.count = 0;
 	}
 	console.log("socket " + id + ": got a message result " + ++gotresult.count);
-	console.log(val);
-
-	if (val.substring(0,1) != '/' && val !== 'topic') {
-		writeMsg(val, socketid, timestamp);
+	var msg;
+	try {
+		msg = new Message().parse(val);
 	}
+	catch(e) {
+		console.log(e);
+		console.log("skipping invalid JSON message");
+		return false;
+	}
+	writeMsg(msg, socketid, timestamp);
 }
 
 function gottopic(obj, opcode, len, id, token, msg) {
@@ -406,7 +432,8 @@ function handleInput() {
 				cmd = esrever.reverse(cmd);
 			}
 			console.log("sending " + cmd);
-			chanselected.send('<' + nick + ">  " + cmd);
+			var msg = new Message(cmd);
+			chanselected.send(JSON.stringify(msg));
 		}
 	}
 	cmdSet("");
@@ -613,7 +640,15 @@ function updateChannelTopic(topic, socketid) {
 
 /* write chat message to channel window */
 function writeMsg(unsafestr, socketid, timestamp) {
-	var msg = $('<div>').text(unsafestr).html();
+	var msg;
+	if (typeof unsafestr === 'object') {
+		if (typeof unsafestr.text !== 'undefined') {
+			msg = $('<div>').text(unsafestr.format()).html();
+		}
+	}
+	else {
+		msg = $('<div>').text(unsafestr).html();
+	}
 
 	/* timestamp message */
 	var d = (typeof timestamp === 'undefined' || timestamp === 0) ? new Date() : new Date(timestamp);
