@@ -705,7 +705,8 @@ function writeMsg(unsafestr, socketid, timestamp) {
 /* write system message to active channel window */
 function writeSysMsg(unsafestr, socketid) {
 	var msg = $('<div>').text(unsafestr).html();
-	var sysmsg = '<pre><span class="sysmsg">' + msg + '</span></pre>';
+	var datetime = timestampFormat();
+	var sysmsg = '<pre><span class="sysmsg">' + datetime + msg + '</span></pre>';
 	writeChannel(sysmsg, socketid);
 }
 
