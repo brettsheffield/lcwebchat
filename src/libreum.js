@@ -383,7 +383,7 @@ function createChannel(channelName) {
 function deleteChannel(channelName) {
 	for (var i = 0, ii = channelNames.length; i < ii; i++) {
 		if (channelNames[i] === channelName.toLowerCase()) {
-			delete channelNames[i];
+			channelNames.splice(channelNames.indexOf(i));
 			localCache.channels = JSON.stringify(channelNames);
 			break;
 		}
@@ -584,16 +584,16 @@ function partChannel(channelName) {
 	var socketid = socketidByChannelName(channelName);
 	var chan = chansocks[socketid];
 
+	/* tell the channel we're leaving */
+	var msg = new Message().type(MSG_TYPE_PART);
+	chan.send(JSON.stringify(msg));
+
 	deleteChannel(channelName);
 
 	/* change to another channel if leaving active */
 	if (localCache.activeChannel === channelName) {
 		changeChannel(socketidByChannelName(channelNames[0]));
 	}
-
-	/* tell the channel we're leaving */
-	var msg = new Message().type(MSG_TYPE_PART);
-	chan.send(JSON.stringify(msg));
 
 	/* TODO: close both channel and socket */
 
