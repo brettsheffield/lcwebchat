@@ -31,6 +31,8 @@ var CMD_HISTORY_LIMIT=32;
 var MSG_TYPE_JOIN = 1;
 var MSG_TYPE_PART = 2;
 
+var PING_INTERVAL = 5000;
+
 var allowedRemoteCmds = [ 'sysmsg' ];
 var channelNames = [];
 var chanselected;
@@ -81,6 +83,7 @@ function ChatPane() {
 	this.channels.forEach(function(chan) {
 		$.when(socket.defer, chan.defer).done(function () {
 			chan.bindSocket(socket, channelBound);
+			chan.interval = setInterval(chan.ping.bind(chan), PING_INTERVAL);
 		});
 	});
 
@@ -96,18 +99,27 @@ ChatPane.prototype.onReady = function() {
 
 
 function User(nick) {
+	console.log("User constructor");
 	this.nick = nick;
 }
 
 /* record a user sighting */
 User.prototype.seen = function(timestamp) {
-	this.lastSeen = new Date(timestamp);
+	console.log("User.seen()");
+	this.lastSeen = (typeof timestamp === 'undefined') ? new Date() : new Date(timestamp);
 	return this;
 };
 
+/* tell the channel we're still here */
+LIBRECAST.Channel.prototype.ping = function() {
+	console.log("--- PING --- (" + this.name + ")");
+	var msg = new Message().type(MSG_TYPE_JOIN);
+	this.send(JSON.stringify(msg));
+};
 
 /* user has joined the channel - make a note */
 LIBRECAST.Channel.prototype.userJoin = function(nick) {
+	console.log("Channel.userJoin()");
 
 	var socketid = this.id2;
 
@@ -115,12 +127,14 @@ LIBRECAST.Channel.prototype.userJoin = function(nick) {
 		this.users[nick] = new User(nick);
 		writeSysMsg(nick + " has joined " + this.name, socketid);
 	}
+	this.users[nick].seen();
 
 	return this;
 };
 
 /* user has left the channel */
 LIBRECAST.Channel.prototype.userPart = function(nick) {
+	console.log("Channel.userPart()");
 
 	var socketid = this.id2;
 
@@ -128,15 +142,19 @@ LIBRECAST.Channel.prototype.userPart = function(nick) {
 		this.users[nick] = new User(nick);
 		writeSysMsg(nick + " has left " + this.name, socketid);
 	}
+	this.users[nick].seen();
 
 };
 
 /* get/set userStatus */
 LIBRECAST.Channel.prototype.userStatus = function (nick, status) {
+	console.log("Channel.userStatus()");
 	if (typeof this.users === "undefined") { this.users = []; }
 	if (typeof status === "undefined") { return this.users[nick]; }
 
 	this.users[nick] = new User(nick).seen();
+
+	console.log("user " + nick + " last seen at " + this.users[nick].lastSeen);
 
 	return this;
 };
@@ -299,6 +317,18 @@ function cmd_topic(args, isRemote) {
 		chanselected.setval("topic", topic);
 	}
 
+	return true;
+}
+
+/* list users on channel */
+function cmd_who() {
+	writeSysMsg("Users on channel " + chanselected.name + ":");
+	console.log(chanselected.users);
+	for (var u in chanselected.users) {
+		var user = chanselected.users[u];
+
+		writeSysMsg(" " + user.nick + " (seen: " + user.lastSeen + ")");
+	}
 	return true;
 }
 
@@ -490,6 +520,8 @@ function handleCmd(cmd, isRemote) {
 		return cmd_sysmsg(args);
 	case "topic":
 		return cmd_topic(args, isRemote);
+	case "who":
+		return cmd_who(args);
 	}
 
 	return true; /* do not write failed commands to channel */
