@@ -479,7 +479,7 @@ function gotresult(cb, opcode, len, id, token, key, val, timestamp) {
 		console.log("skipping invalid JSON message");
 		return false;
 	}
-	writeMsg(msg, socketid, timestamp);
+	if (typeof msg.text !== 'undefined') writeMsg(msg, socketid, timestamp);
 }
 
 function gottopic(obj, opcode, len, id, token, msg) {
