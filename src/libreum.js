@@ -106,16 +106,6 @@ User.prototype.seen = function(timestamp) {
 };
 
 
-/* get/set userStatus */
-LIBRECAST.Channel.prototype.userStatus = function (nick, status) {
-	if (typeof this.users === "undefined") { this.users = []; }
-	if (typeof status === "undefined") { return this.users[nick]; }
-
-	this.users[nick] = new User(nick).seen();
-
-	return this;
-};
-
 /* user has joined the channel - make a note */
 LIBRECAST.Channel.prototype.userJoin = function(nick) {
 
@@ -140,6 +130,17 @@ LIBRECAST.Channel.prototype.userPart = function(nick) {
 	}
 
 };
+
+/* get/set userStatus */
+LIBRECAST.Channel.prototype.userStatus = function (nick, status) {
+	if (typeof this.users === "undefined") { this.users = []; }
+	if (typeof status === "undefined") { return this.users[nick]; }
+
+	this.users[nick] = new User(nick).seen();
+
+	return this;
+};
+
 
 function Message(text) {
 	this.nick = nick;
