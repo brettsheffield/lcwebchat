@@ -231,6 +231,7 @@ function cmd_help(args) {
 	writeSysMsg("  /part [channel]             - leave active or specified channel");
 	writeSysMsg("  /reset                      - delete all local storage");
 	writeSysMsg("  /rtl                        - toggle right-to-left input");
+	writeSysMsg("  /who                        - list when users were last seen on channel");
 	writeSysMsg("");
 	return true;
 }
