@@ -741,15 +741,13 @@ function writeMsg(unsafestr, socketid, timestamp) {
 		if (typeof unsafestr.text !== 'undefined') {
 			msg = $('<div>').text(unsafestr.format()).html();
 		}
-		else if (unsafestr.type === MSG_TYPE_JOIN) {
-			writeSysMsg(unsafestr.nick + " has joined " + chan.name, socketid, timestamp);
-			return;
-		}
-		else if (unsafestr.type === MSG_TYPE_PART) {
-			writeSysMsg(unsafestr.nick + " has left " + chan.name, socketid, timestamp);
-			return;
-		}
 		else {
+			if (unsafestr.type === MSG_TYPE_JOIN) {
+				writeSysMsg(unsafestr.nick + " has joined " + chan.name, socketid, timestamp);
+			}
+			else if (unsafestr.type === MSG_TYPE_PART) {
+				writeSysMsg(unsafestr.nick + " has left " + chan.name, socketid, timestamp);
+			}
 			return false;
 		}
 	}
