@@ -113,8 +113,7 @@ User.prototype.seen = function(timestamp) {
 /* tell the channel we're still here */
 LIBRECAST.Channel.prototype.ping = function() {
 	console.log("--- PING --- (" + this.name + ")");
-	var msg = new Message().type(MSG_TYPE_JOIN);
-	this.send(JSON.stringify(msg));
+	this.setval("join", nick);
 };
 
 /* user has joined the channel - make a note */
@@ -324,7 +323,6 @@ function cmd_topic(args, isRemote) {
 /* list users on channel */
 function cmd_who() {
 	writeSysMsg("Users on channel " + chanselected.name + ":");
-	console.log(chanselected.users);
 	for (var u in chanselected.users) {
 		var user = chanselected.users[u];
 
@@ -454,7 +452,10 @@ function gotmail(cb, opcode, len, id, token, key, val, timestamp) {
 		updateChannelTopic(val, sock.id);
 	}
 	else if (opcode === lc.OP_CHANNEL_SETVAL) {
-		if (key == 'topic') {
+		if (key == 'join') {
+			chan.userJoin(val);
+		}
+		else if (key == 'topic') {
 			updateChannelTopic(val, sock.id);
 		}
 		else {
@@ -595,8 +596,7 @@ function initKeyEvents() {
 
 function joined(cb) {
 	var chan = cb.obj;
-	var msg = new Message().type(MSG_TYPE_JOIN);
-	chan.send(JSON.stringify(msg));
+	chan.setval("join", nick);
 }
 
 /* callback when Librecast Context is ready */
