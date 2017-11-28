@@ -562,10 +562,6 @@ function init() {
 	$("#usercmd").focus();
 }
 
-function isRTL() {
-	return $('#usercmd').hasClass('rtl');
-}
-
 function initKeyEvents() {
 	console.log("initKeyEvents()");
 
@@ -592,6 +588,10 @@ function initKeyEvents() {
 				break;
 		}
 	});
+}
+
+function isRTL() {
+	return $('#usercmd').hasClass('rtl');
 }
 
 function joined(cb) {
@@ -729,6 +729,19 @@ function timestampFormat(timestamp) {
 	return date + time;
 }
 
+/* set the topic div in the channel window */
+function updateChannelTopic(topic, socketid) {
+	var divtopic;
+	if (socketid === undefined) {
+		divtopic = $("div.topic.active");
+	}
+	else {
+		divtopic = $("#topic_" + socketid);
+	}
+	if (typeof divtopic !== 'undefined') {
+		divtopic.html("<h1>" + topic + "</h1>");
+	}
+}
 
 /* check channel name validity */
 function validChannelName(channelName) {
@@ -750,20 +763,6 @@ function validChannelName(channelName) {
 	}
 
 	return channelName.toLowerCase();
-}
-
-/* set the topic div in the channel window */
-function updateChannelTopic(topic, socketid) {
-	var divtopic;
-	if (socketid === undefined) {
-		divtopic = $("div.topic.active");
-	}
-	else {
-		divtopic = $("#topic_" + socketid);
-	}
-	if (typeof divtopic !== 'undefined') {
-		divtopic.html("<h1>" + topic + "</h1>");
-	}
 }
 
 /* write chat message to channel window */
