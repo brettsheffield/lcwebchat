@@ -311,7 +311,6 @@ function cmd_rtl(args) {
 function cmd_topic(args, isRemote) {
 	args.shift();
 	var topic = args.join(" ");
-	writeSysMsg('channel topic changed to "' + topic + '"');
 
 	if (chanselected) {
 		chanselected.setval("topic", topic);
@@ -457,6 +456,7 @@ function gotmail(cb, opcode, len, id, token, key, val, timestamp) {
 		}
 		else if (key == 'topic') {
 			updateChannelTopic(val, sock.id);
+			writeSysMsg('channel topic changed to "' + val + '"');
 		}
 		else {
 			console.log("ignoring unknown key '" + key + "'");
