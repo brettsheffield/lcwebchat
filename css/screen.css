@@ -83,6 +83,9 @@ span.datestamp {
 	font-size: 90%;
 	margin-right: 0.1em;
 }
+span.nanostamp {
+	display: none;
+}
 span.timestamp {
 	font-family: monospace;
 	font-size: 90%;

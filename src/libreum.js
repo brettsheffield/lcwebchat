@@ -189,6 +189,15 @@ Message.prototype.type = function(type) {
 /* callback when Librecast.Channel is bound to Librecast.Socket */
 var channelBound = function () {
 	var chan = this;
+	var timestamp;
+
+	/* get timestamp of last message for this channel */
+	for (var c in chansocks) {
+		if (chansocks[c].name === chan.name) {
+			timestamp = chansocks[c].timestamp;
+		}
+	}
+
 	chansocks[chan.id2] = chan;
 	if ((localCache.activeChannel == chan.name) || (typeof chanselected === 'undefined'))
 		changeChannel(chan.id2);
@@ -202,7 +211,7 @@ var channelBound = function () {
 	chan.getval("topic", gottopic);
 
 	/* fetch channel history */
-	chan.getmsg(gotresult);
+	chan.getmsg(gotresult, timestamp);
 };
 
 /* callback when Librecast.Channel is created
@@ -424,6 +433,8 @@ function gotmail(cb, opcode, len, id, token, key, val, timestamp) {
 	var sock = cb.obj;
 	var chan = chansocks[sock.id];
 	var msg;
+
+	chan.timestamp = timestamp;
 
 	if (opcode === lc.OP_SOCKET_MSG) {
 		if (!handleCmd(val, true)) {
@@ -723,10 +734,11 @@ function timestampFormat(timestamp) {
 	var seconds = ("0" + d.getSeconds()).slice(-2);
 
 	/* formatting is mostly CSS, but also use a non-breaking space so cut and paste is legible */
+	var nanostamp = '<span class="nanostamp">' + timestamp + '</span>';
 	var date = '<span class="datestamp">' + d.getFullYear() + '-' + month + '-' + day + '&nbsp;</span>';
 	var time = '<span class="timestamp">' + hours + ':' + minutes + ':' + seconds + '&nbsp;</span>';
 
-	return date + time;
+	return nanostamp + date + time;
 }
 
 /* set the topic div in the channel window */
