@@ -458,8 +458,7 @@ function gotmail(cb, opcode, len, id, token, key, val, timestamp) {
 		}
 	}
 	else if (opcode === lc.OP_CHANNEL_GETVAL) {
-		/* TODO: check key */
-		updateChannelTopic(val, sock.id);
+		if (key === 'topic') { updateChannelTopic(val, sock.id); }
 	}
 	else if (opcode === lc.OP_CHANNEL_SETVAL) {
 		if (key == 'join') {
