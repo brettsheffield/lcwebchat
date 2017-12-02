@@ -211,7 +211,8 @@ var channelBound = function () {
 	chan.getval("topic", gottopic);
 
 	/* fetch channel history */
-	chan.getmsg(gotresult, timestamp);
+	var qry = new LIBRECAST.Query().timestamp(timestamp);
+	chan.getmsg(gotresult, qry);
 };
 
 /* callback when Librecast.Channel is created
