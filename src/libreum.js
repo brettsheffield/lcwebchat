@@ -211,7 +211,7 @@ var channelBound = function () {
 	chan.getval("topic", gottopic);
 
 	/* fetch channel history */
-	var qry = new LIBRECAST.Query().timestamp(timestamp * 1000000, lc.QUERY_GT);
+	var qry = new LIBRECAST.Query().timestamp(timestamp, lc.QUERY_GT);
 	chan.getmsg(gotresult, qry);
 };
 
@@ -726,7 +726,8 @@ function sockready(cb) {
 
 function timestampFormat(timestamp) {
 	/* timestamp message */
-	var d = (typeof timestamp === 'undefined' || timestamp === 0) ? new Date() : new Date(timestamp);
+	var t = Number(timestamp.toString().substring(0, 13));
+	var d = (!timestamp) ? new Date() : new Date(t);
 	var month = ("0" + (d.getMonth() + 1)).slice(-2);
 	var day = ("0" + d.getDate()).slice(-2);
 	var hours = ("0" + d.getHours()).slice(-2);
@@ -734,7 +735,7 @@ function timestampFormat(timestamp) {
 	var seconds = ("0" + d.getSeconds()).slice(-2);
 
 	/* formatting is mostly CSS, but also use a non-breaking space so cut and paste is legible */
-	var nanostamp = '<span class="nanostamp">' + timestamp + '</span>';
+	var nanostamp = '<span class="nanostamp">' + timestamp.toString() + '</span>';
 	var date = '<span class="datestamp">' + d.getFullYear() + '-' + month + '-' + day + '&nbsp;</span>';
 	var time = '<span class="timestamp">' + hours + ':' + minutes + ':' + seconds + '&nbsp;</span>';
 
