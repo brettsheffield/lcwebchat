@@ -302,6 +302,19 @@ function cmd_part(args) {
 	return true;
 }
 
+/* search messages */
+function cmd_search(args) {
+	args.shift();
+	var qry = new LIBRECAST.Query();
+
+	/* TODO: search types keyword/time etc. */
+	while (args.length > 0) {
+		qry.key("message_timestamp", args.shift());
+	}
+	chanselected.getmsg(gotresult, qry);
+	return true;
+}
+
 /* /sysmsg command -  write system message */
 function cmd_sysmsg(args) {
 	args.shift();
@@ -516,6 +529,8 @@ function handleCmd(cmd, isRemote) {
 		console.log("bad remote command received: " + command);
 	}
 	switch (command) {
+	case "?":
+		return cmd_search(args);
 	case "help":
 		return cmd_help(args);
 	case "join":
