@@ -195,6 +195,7 @@ var channelBound = function () {
 	for (var c in chansocks) {
 		if (chansocks[c].name === chan.name) {
 			timestamp = chansocks[c].timestamp;
+			break;
 		}
 	}
 
