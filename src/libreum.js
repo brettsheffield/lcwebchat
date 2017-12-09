@@ -310,7 +310,7 @@ function cmd_search(args) {
 
 	/* TODO: search types keyword/time etc. */
 	while (args.length > 0) {
-		qry.key("message_keyword", args.shift().toLowerCase());
+		qry.key("message_keyword", args.shift().toLowerCase().replace(/\W+/g, ""));
 	}
 	chanselected.getmsg(gotresult, qry);
 	return true;
