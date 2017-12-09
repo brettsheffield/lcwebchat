@@ -508,8 +508,9 @@ function gotresult(cb, opcode, len, id, token, key, val, timestamp) {
 	if (typeof msg.text !== 'undefined') writeMsg(msg, socketid, timestamp);
 }
 
-function gottopic(obj, opcode, len, id, token, msg) {
-	updateChannelTopic(msg, obj.obj.id);
+function gottopic(cb, opcode, len, id, token, key, val, timestamp) {
+	var socketid = cb.obj.id2;
+	updateChannelTopic(val, socketid);
 }
 
 /* process any /cmd irc-like commands */
