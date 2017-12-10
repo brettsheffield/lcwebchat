@@ -159,21 +159,45 @@ LIBRECAST.Channel.prototype.userStatus = function (nick, status) {
 };
 
 
+LIBRECAST.Filter = function (arg) {
+	this.arg = arg;
+	var ops = [ '<', '>', "=" ];
+	for (var j in ops) {
+		for (var i = 0; i < arg.length; i++) {
+			if (arg[i] === ops[j]) {
+				this.type = arg.substring(0, i);
+				if (arg[i+1] === '=') {
+					this.op = ops[j] + '=';
+					this.key = arg.substring(i + 2);
+					return this;
+				}
+				else {
+					this.op = ops[j];
+					this.key = arg.substring(i + 1);
+					return this;
+				}
+			}
+		}
+	}
+	/* default to keyword search */
+	this.type = "key";
+	this.op = '=';
+	this.key = arg;
+	return this;
+};
+
+
 LIBRECAST.Query.prototype.filter = function(arg) {
-	var i = arg.indexOf("=");
-	if (i === -1) {
-		/* default is keyword search */
+	var f = new LIBRECAST.Filter(arg);
+
+	if (f.type === 'key') {
 		this.key("message_keyword", arg.toLowerCase().replace(/\W+/g, ""));
 	}
-	else if (i > 0) {
-		var type = arg.substring(0, i);
-		var key = arg.substring(i + 1);
-		if (type === 'n' || type === 'nick') {
-			this.key("message_nick", key.toLowerCase().replace(/\W+/g, ""));
-		}
-		else if (type === 't' || type === 'time') {
-			this.timestamp(key, lc.QUERY_EQ);
-		}
+	else if (f.type === 'n' || f.type === 'nick') {
+		this.key("message_nick", f.key.toLowerCase().replace(/\W+/g, ""));
+	}
+	else if (f.type === 't' || f.type === 'time') {
+		this.timestamp(f.key, lc.QUERY_EQ);
 	}
 	else {
 		this.filter(arg.substring(1)); /* = with no type, strip it */
