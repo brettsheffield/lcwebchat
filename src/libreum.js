@@ -162,7 +162,7 @@ LIBRECAST.Channel.prototype.userStatus = function (nick, status) {
 LIBRECAST.Query.prototype.filter = function(arg) {
 	var i = arg.indexOf("=");
 	if (i === -1) {
-		/* default => keyword search */
+		/* default is keyword search */
 		this.key("message_keyword", arg.toLowerCase().replace(/\W+/g, ""));
 	}
 	else if (i > 0) {
@@ -171,9 +171,12 @@ LIBRECAST.Query.prototype.filter = function(arg) {
 		if (type === 'n' || type === 'nick') {
 			this.key("message_nick", key.toLowerCase().replace(/\W+/g, ""));
 		}
+		else if (type === 't' || type === 'time') {
+			this.timestamp(key, lc.QUERY_EQ);
+		}
 	}
 	else {
-		this.filter(arg.substring(1));
+		this.filter(arg.substring(1)); /* = with no type, strip it */
 	}
 	return this;
 };
