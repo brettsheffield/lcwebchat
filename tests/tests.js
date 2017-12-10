@@ -19,4 +19,11 @@ QUnit.test("Filter", function(assert) {
 	assert.strictEqual(f.op, "=", "Filter.op (default to keyword filter)");
 	assert.strictEqual(f.key, arg, "Filter.key (default to keyword filter)");
 
+	arg = "key=token";
+	f = new LIBRECAST.Filter(arg);
+	assert.strictEqual(f.type, "key", "Filter.type (keyword)");
+	assert.strictEqual(f.op, "=", "Filter.op (keyword)");
+	assert.strictEqual(f.key, "token", "Filter.key (keyword)");
+
+
 });

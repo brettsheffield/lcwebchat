@@ -191,13 +191,23 @@ LIBRECAST.Query.prototype.filter = function(arg) {
 	var f = new LIBRECAST.Filter(arg);
 
 	if (f.type === 'key') {
-		this.key("message_keyword", arg.toLowerCase().replace(/\W+/g, ""));
+		this.key("message_keyword", f.key.toLowerCase().replace(/\W+/g, ""));
 	}
 	else if (f.type === 'n' || f.type === 'nick') {
 		this.key("message_nick", f.key.toLowerCase().replace(/\W+/g, ""));
 	}
 	else if (f.type === 't' || f.type === 'time') {
-		this.timestamp(f.key, lc.QUERY_EQ);
+		var op;
+		for (var i in f.op) {
+			if (f.op[i] === '<')
+				op |= lc.QUERY_LT;
+			else if (f.op[i] === '>')
+				op |= lc.QUERY_GT;
+			else if (f.op[i] === '=')
+				op |= lc.QUERY_EQ;
+		}
+		if (typeof op === 'undefined') op = lc.QUERY_EQ;
+		this.timestamp(f.key, op);
 	}
 	else {
 		this.filter(arg.substring(1)); /* = with no type, strip it */
