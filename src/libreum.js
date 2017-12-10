@@ -319,6 +319,13 @@ function cmd_help(args) {
 	writeSysMsg("  /reset                      - delete all local storage");
 	writeSysMsg("  /rtl                        - toggle right-to-left input");
 	writeSysMsg("  /who                        - list when users were last seen on channel");
+	writeSysMsg("  /?                          - search messages eg:-");
+	writeSysMsg("  /? hello                    - search for messages containing the word 'hello'");
+	writeSysMsg("  /? time>2017-12-08          - search for messages after 2017-12-08");
+	writeSysMsg("  /? t<2017-12-08             - search for messages before 2017-12-08");
+	writeSysMsg("  /? nick=fred                - search for messages where nick='fred'");
+	writeSysMsg("  /? n=fred hello t<2017-12-08T12:00");
+	writeSysMsg("                              - messages by fred containing 'hello' before noon on 8th December 2017");
 	writeSysMsg("");
 	return true;
 }
