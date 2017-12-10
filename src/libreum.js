@@ -188,6 +188,12 @@ LIBRECAST.Filter = function (arg) {
 				for (var k in lc.FILTER_LONG) {
 					if (this.type === lc.FILTER_LONG[k]) this.type = lc.FILTER_SHORT[k];
 				}
+				/* convert timestamp */
+				if (this.type === lc.FILTER_TIME) {
+					var d = moment(this.key);
+					if (d.isValid())
+						this.key = d.format("x") + "000000";
+				}
 				return this;
 			}
 		}
