@@ -159,6 +159,11 @@ LIBRECAST.Channel.prototype.userStatus = function (nick, status) {
 };
 
 
+LIBRECAST.Query.prototype.filter = function(arg) {
+	this.key("message_keyword", arg.toLowerCase().replace(/\W+/g, ""));
+};
+
+
 function Message(text) {
 	this.nick = nick;
 	this.text = text;
@@ -310,7 +315,7 @@ function cmd_search(args) {
 
 	/* TODO: search types keyword/time etc. */
 	while (args.length > 0) {
-		qry.key("message_keyword", args.shift().toLowerCase().replace(/\W+/g, ""));
+		qry.filter(args.shift());
 	}
 	chanselected.getmsg(gotresult, qry);
 	return true;
