@@ -46,6 +46,16 @@ var localCache = localStorage;
 var nick = "guest";
 var sockselected;
 
+lc.FILTER_KEY = 'k';
+lc.FILTER_KEY_LONG = 'key';
+lc.FILTER_NICK = 'n';
+lc.FILTER_NICK_LONG = 'nick';
+lc.FILTER_TIME = 't';
+lc.FILTER_TIME_LONG = 'time';
+
+lc.FILTER_SHORT = [ lc.FILTER_KEY, lc.FILTER_NICK, lc.FILTER_TIME ];
+lc.FILTER_LONG = [ lc.FILTER_KEY_LONG, lc.FILTER_NICK_LONG, lc.FILTER_TIME_LONG ];
+
 
 /**
  * ChatPane -  a chat window
@@ -169,18 +179,21 @@ LIBRECAST.Filter = function (arg) {
 				if (arg[i+1] === '=') {
 					this.op = ops[j] + '=';
 					this.key = arg.substring(i + 2);
-					return this;
 				}
 				else {
 					this.op = ops[j];
 					this.key = arg.substring(i + 1);
-					return this;
 				}
+				/* convert longhand */
+				for (var k in lc.FILTER_LONG) {
+					if (this.type === lc.FILTER_LONG[k]) this.type = lc.FILTER_SHORT[k];
+				}
+				return this;
 			}
 		}
 	}
 	/* default to keyword search */
-	this.type = "key";
+	this.type = lc.FILTER_KEY;
 	this.op = '=';
 	this.key = arg;
 	return this;
@@ -190,13 +203,13 @@ LIBRECAST.Filter = function (arg) {
 LIBRECAST.Query.prototype.filter = function(arg) {
 	var f = new LIBRECAST.Filter(arg);
 
-	if (f.type === 'key') {
+	if (f.type === lc.FILTER_KEY) {
 		this.key("message_keyword", f.key.toLowerCase().replace(/\W+/g, ""));
 	}
-	else if (f.type === 'n' || f.type === 'nick') {
+	else if (f.type === lc.FILTER_NICK) {
 		this.key("message_nick", f.key.toLowerCase().replace(/\W+/g, ""));
 	}
-	else if (f.type === 't' || f.type === 'time') {
+	else if (f.type === lc.FILTER_TIME) {
 		var op;
 		for (var i in f.op) {
 			if (f.op[i] === '<')
@@ -212,6 +225,7 @@ LIBRECAST.Query.prototype.filter = function(arg) {
 	else {
 		this.filter(arg.substring(1)); /* = with no type, strip it */
 	}
+
 	return this;
 };
 

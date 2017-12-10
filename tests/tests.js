@@ -1,5 +1,5 @@
 QUnit.test("Filter", function(assert) {
-	var type = "time";
+	var type = LIBRECAST.FILTER_TIME;
 	var ops = [ "<=", "<", ">=", ">", "=" ];
 
 	for (var i in ops) {
@@ -15,15 +15,13 @@ QUnit.test("Filter", function(assert) {
 
 	arg = "token";
 	f = new LIBRECAST.Filter(arg);
-	assert.strictEqual(f.type, "key", "Filter.type (default to keyword filter)");
+	assert.strictEqual(f.type, LIBRECAST.FILTER_KEY, "Filter.type (default to keyword filter)");
 	assert.strictEqual(f.op, "=", "Filter.op (default to keyword filter)");
 	assert.strictEqual(f.key, arg, "Filter.key (default to keyword filter)");
 
 	arg = "key=token";
 	f = new LIBRECAST.Filter(arg);
-	assert.strictEqual(f.type, "key", "Filter.type (keyword)");
+	assert.strictEqual(f.type, LIBRECAST.FILTER_KEY, "Filter.type (keyword)");
 	assert.strictEqual(f.op, "=", "Filter.op (keyword)");
 	assert.strictEqual(f.key, "token", "Filter.key (keyword)");
-
-
 });
