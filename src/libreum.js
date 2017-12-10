@@ -160,7 +160,22 @@ LIBRECAST.Channel.prototype.userStatus = function (nick, status) {
 
 
 LIBRECAST.Query.prototype.filter = function(arg) {
-	this.key("message_keyword", arg.toLowerCase().replace(/\W+/g, ""));
+	var i = arg.indexOf("=");
+	if (i === -1) {
+		/* default => keyword search */
+		this.key("message_keyword", arg.toLowerCase().replace(/\W+/g, ""));
+	}
+	else if (i > 0) {
+		var type = arg.substring(0, i);
+		var key = arg.substring(i + 1);
+		if (type === 'n' || type === 'nick') {
+			this.key("message_nick", key.toLowerCase().replace(/\W+/g, ""));
+		}
+	}
+	else {
+		this.filter(arg.substring(1));
+	}
+	return this;
 };
 
 
