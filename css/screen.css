@@ -1,11 +1,11 @@
 * {
-        margin: 0;
-        padding: 0;
+	margin: 0;
+	padding: 0;
 }
 html, body {
-        color: black;
+	color: black;
 	background-color: grey;
-        height: 100%;
+	height: 100%;
 }
 div, input {
 	-webkit-box-sizing: border-box;

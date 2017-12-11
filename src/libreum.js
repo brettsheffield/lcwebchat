@@ -427,6 +427,45 @@ function cmd_topic(args, isRemote) {
 	return true;
 }
 
+/* upload a file */
+function cmd_upload(args) {
+	/* popup file dialog */
+	var fileDialog = $('input[name="filename"]');
+	fileDialog.change(function() {
+		if (fileDialog.length > 0) {
+			$.ajax({
+				url: '/upload/',
+				type: 'POST',
+				data: new FormData($('form')[0]),
+				cache: false,
+				contentType: false,
+				processData: false,
+				xhr: function() {
+					var myXhr = $.ajaxSettings.xhr();
+					if (myXhr.upload) {
+						myXhr.upload.addEventListener('error', function(e) {
+							writeSysMsg("error uploading file");
+						});
+						myXhr.upload.addEventListener('load', function(e) {
+							writeSysMsg('"' + fileDialog[0].value + '" uploaded (' + e.loaded + ' bytes)');
+						});
+					}
+					return myXhr;
+				},
+				success: function(xml) {
+					var code = $(xml).find('sha1sum').text();
+					var url = '/files/' + code;
+					writeChannel('<a href="' + url + '">' + url + '</a>');
+				},
+			});
+		}
+	});
+	fileDialog.trigger("click");
+
+
+	return true;
+}
+
 /* list users on channel */
 function cmd_who() {
 	writeSysMsg("Users on channel " + chanselected.name + ":");
@@ -634,6 +673,8 @@ function handleCmd(cmd, isRemote) {
 		return cmd_sysmsg(args);
 	case "topic":
 		return cmd_topic(args, isRemote);
+	case "upload":
+		return cmd_upload(args);
 	case "who":
 		return cmd_who(args);
 	}
