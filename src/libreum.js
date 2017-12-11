@@ -441,46 +441,8 @@ function cmd_topic(args, isRemote) {
 
 /* upload a file */
 function cmd_upload(args) {
-	/* popup file dialog */
 	var fileDialog = $('input[name="filename"]');
-	fileDialog.change(function() {
-		if (fileDialog.length > 0) {
-			$.ajax({
-				url: '/upload/',
-				type: 'POST',
-				data: new FormData($('form')[0]),
-				cache: false,
-				contentType: false,
-				processData: false,
-				xhr: function() {
-					var myXhr = $.ajaxSettings.xhr();
-					if (myXhr.upload) {
-						myXhr.upload.addEventListener('error', function(e) {
-							writeSysMsg("error uploading file");
-						});
-						myXhr.upload.addEventListener('load', function(e) {
-							writeSysMsg('"' + fileDialog[0].value + '" uploaded (' + e.loaded + ' bytes)');
-						});
-					}
-					return myXhr;
-				},
-				success: function(xml) {
-					var code = $(xml).find('sha1sum').text();
-					var url = '/files/' + code;
-
-					/* TODO: send sysmsg to channel */
-					var msg = new Message();
-					msg.type = MSG_TYPE_SYS;
-					msg.html = nick + ' has uploaded a file <a href="' + url + '">' +
-						fileDialog[0].value + '</a>';
-					chanselected.send(JSON.stringify(msg));
-				},
-			});
-		}
-	});
-	fileDialog.trigger("click");
-
-
+	fileDialog.trigger("click"); /* popup file dialog */
 	return true;
 }
 
@@ -760,6 +722,47 @@ function initKeyEvents() {
 				e.preventDefault();
 				cmdHistoryGet(cmdIndex - 1);
 				break;
+		}
+	});
+
+	/* file upload dialog */
+	var fileDialog = $('div.uploader > form > input[name="filename"]');
+	fileDialog.change(function() {
+		if (fileDialog.length > 0) {
+			$.ajax({
+				url: '/upload/',
+				type: 'POST',
+				data: new FormData($('form')[0]),
+				cache: false,
+				contentType: false,
+				processData: false,
+				xhr: function() {
+					var myXhr = $.ajaxSettings.xhr();
+					if (myXhr.upload) {
+						myXhr.upload.addEventListener('error', function(e) {
+							writeSysMsg("error uploading file");
+						});
+						myXhr.upload.addEventListener('load', function(e) {
+							writeSysMsg('"' + fileDialog[0].value + '" uploaded (' + e.loaded + ' bytes)');
+						});
+					}
+					return myXhr;
+				},
+				success: function(xml) {
+					/* send sysmsg to channel */
+					var code = $(xml).find('sha1sum').text();
+					var url = '/files/' + code;
+					var msg = new Message();
+					msg.type = MSG_TYPE_SYS;
+					msg.html = '<pre><span class="sysmsg">' + nick +
+						' has uploaded a file <a href="' + url + '">' +
+						fileDialog[0].value + '</a></span></pre>';
+					chanselected.send(JSON.stringify(msg));
+
+					/* reset form */
+					//$('div.uploader > form').reset();
+				},
+			});
 		}
 	});
 }
