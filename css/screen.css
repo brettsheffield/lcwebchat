@@ -110,3 +110,6 @@ div.channels > li.active {
 div.channels > li.unread {
 	color: blue;
 }
+progress.upload {
+	width: 85%;
+}

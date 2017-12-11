@@ -729,6 +729,12 @@ function initKeyEvents() {
 	var fileDialog = $('div.uploader > form > input[name="filename"]');
 	fileDialog.change(function() {
 		if (fileDialog.length > 0) {
+			/* add progress meter */
+			var progress = $('<progress class="upload"></progress>');
+			progress.val(0);
+			progress.prop("max", 100);
+			writeChannel(progress);
+
 			$.ajax({
 				url: '/upload/',
 				type: 'POST',
@@ -745,6 +751,10 @@ function initKeyEvents() {
 						myXhr.upload.addEventListener('load', function(e) {
 							writeSysMsg('"' + fileDialog[0].value + '" uploaded (' + e.loaded + ' bytes)');
 						});
+						myXhr.upload.addEventListener('progress', function(e) {
+							progress.prop("max", e.total);
+							progress.val(e.loaded);
+						});
 					}
 					return myXhr;
 				},
@@ -758,9 +768,6 @@ function initKeyEvents() {
 						' has uploaded a file <a href="' + url + '">' +
 						fileDialog[0].value + '</a></span></pre>';
 					chanselected.send(JSON.stringify(msg));
-
-					/* reset form */
-					//$('div.uploader > form').reset();
 				},
 			});
 		}
