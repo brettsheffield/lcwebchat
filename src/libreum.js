@@ -729,6 +729,11 @@ function initKeyEvents() {
 	/* file upload dialog */
 	var fileDialog = $('div.uploader > form > input[name="filename"]');
 	fileDialog.change(function() {
+		var filename = fileDialog[0].value;
+		var filebits = filename.split("\\");
+		if (filebits.length > 1) {
+			filename = filebits[filebits.length - 1];
+		}
 		if (fileDialog.length > 0) {
 			/* add progress meter */
 			var progress = $('<progress class="upload"></progress>');
@@ -750,7 +755,7 @@ function initKeyEvents() {
 							writeSysMsg("error uploading file");
 						});
 						myXhr.upload.addEventListener('load', function(e) {
-							writeSysMsg('"' + fileDialog[0].value + '" uploaded (' + e.loaded + ' bytes)');
+							writeSysMsg('"' + filename + '" uploaded (' + e.loaded + ' bytes)');
 						});
 						myXhr.upload.addEventListener('progress', function(e) {
 							progress.prop("max", e.total);
@@ -766,8 +771,7 @@ function initKeyEvents() {
 					var msg = new Message();
 					msg.type = MSG_TYPE_SYS;
 					msg.html = '<pre><span class="sysmsg">' + nick +
-						' has uploaded a file <a href="' + url + '">' +
-						fileDialog[0].value + '</a></span></pre>';
+						' has uploaded a file <a href="' + url + '" download>' + filename + '</a></span></pre>';
 					chanselected.send(JSON.stringify(msg));
 				},
 			});
