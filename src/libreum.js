@@ -30,6 +30,7 @@ var CMD_HISTORY_LIMIT=32;
 
 var MSG_TYPE_JOIN = 1;
 var MSG_TYPE_PART = 2;
+var MSG_TYPE_SYS = 3;
 
 var PING_INTERVAL = 5000;
 
@@ -126,6 +127,13 @@ LIBRECAST.Channel.prototype.ping = function() {
 	this.setval("join", nick);
 };
 
+/* sysmsg received */
+LIBRECAST.Channel.prototype.sysmsg = function(msg) {
+	if (typeof msg.html !== 'undefined') {
+		this.write(msg.html);
+	}
+};
+
 /* user has joined the channel - make a note */
 LIBRECAST.Channel.prototype.userJoin = function(nick) {
 	console.log("Channel.userJoin()");
@@ -168,6 +176,10 @@ LIBRECAST.Channel.prototype.userStatus = function (nick, status) {
 	return this;
 };
 
+/* write message to channel pane */
+LIBRECAST.Channel.prototype.write = function (text) {
+	writeChannel(text, this.id2);
+};
 
 LIBRECAST.Filter = function (arg) {
 	this.arg = arg;
@@ -455,7 +467,13 @@ function cmd_upload(args) {
 				success: function(xml) {
 					var code = $(xml).find('sha1sum').text();
 					var url = '/files/' + code;
-					writeChannel('<a href="' + url + '">' + url + '</a>');
+
+					/* TODO: send sysmsg to channel */
+					var msg = new Message();
+					msg.type = MSG_TYPE_SYS;
+					msg.html = nick + ' has uploaded a file <a href="' + url + '">' +
+						fileDialog[0].value + '</a>';
+					chanselected.send(JSON.stringify(msg));
 				},
 			});
 		}
@@ -584,6 +602,9 @@ function gotmail(cb, opcode, len, id, token, key, val, timestamp) {
 				return false;
 			}
 			switch (msg.type) {
+				case MSG_TYPE_SYS:
+					chan.sysmsg(msg);
+					break;
 				case MSG_TYPE_JOIN:
 					chan.userJoin(msg.nick);
 					break;
