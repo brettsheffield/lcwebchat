@@ -808,13 +808,15 @@ function librecastCtxReady(ctx) {
 
 	ctx.chatPanes = [];
 
-	/* system channel - not connected */
-	lctx.chatPanes.push(new ChatPane());
-
 	/* join any channels we were on last time */
 	channelNames.forEach(function(name) {
 		ctx.chatPanes.push(new ChatPane(name));
 	});
+
+	/* if no channel selected, join random */
+	if (localCache.activeChannel === undefined) {
+		cmd_rand('', []);
+	}
 }
 
 /* leave (part) channel */
