@@ -400,6 +400,13 @@ function cmd_part(args) {
 	return true;
 }
 
+/* /rtl command - toggle right-to-left input */
+function cmd_rtl(args) {
+	$("#usercmd").toggleClass('rtl');
+
+	return true;
+}
+
 /* search messages */
 function cmd_search(args) {
 	args.shift();
@@ -418,13 +425,6 @@ function cmd_sysmsg(args) {
 	args.shift();
 	var msg = args.join(" ");
 	writeSysMsg(msg);
-	return true;
-}
-
-/* /rtl command - toggle right-to-left input */
-function cmd_rtl(args) {
-	$("#usercmd").toggleClass('rtl');
-
 	return true;
 }
 
