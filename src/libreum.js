@@ -515,6 +515,9 @@ function changeChannel(socketid) {
 	if (channelName) {
 		localCache.activeChannel = channelName;
 	}
+
+	// rewrite URI bar
+	window.history.pushState(channelName, channelName, "/" + channelName.substring(1));
 }
 
 /* create a new chat channel
@@ -670,15 +673,13 @@ function handleCmd(cmd, isRemote) {
 function handleInput() {
 	var cmd = cmdGet();
 	cmdHistorySet(cmd);
-	if (chanselected) {
-		if (!handleCmd(cmd)) {
-			if (isRTL()) {
-				cmd = esrever.reverse(cmd);
-			}
-			console.log("sending " + cmd);
-			var msg = new Message(cmd);
-			chanselected.send(JSON.stringify(msg));
+	if (!handleCmd(cmd) && chanselected) {
+		if (isRTL()) {
+			cmd = esrever.reverse(cmd);
 		}
+		console.log("sending " + cmd);
+		var msg = new Message(cmd);
+		chanselected.send(JSON.stringify(msg));
 	}
 	cmdSet("");
 	cmdIndex = -1;
@@ -794,6 +795,9 @@ function librecastCtxReady(ctx) {
 
 	ctx.chatPanes = [];
 
+	/* system channel - not connected */
+	lctx.chatPanes.push(new ChatPane());
+
 	/* join any channels we were on last time */
 	channelNames.forEach(function(name) {
 		ctx.chatPanes.push(new ChatPane(name));
@@ -875,18 +879,17 @@ function readLocalStorage() {
 				console.log("no channels loaded");
 			}
 		}
-		if (channelNames.length === 0) {
-			channelNames = [ channelDefault ];
-			localCache.activeChannel = channelDefault;
-		}
 		console.log(channelNames);
-	}
-	else {
-		channelNames = [ channelDefault ];
-		localCache.activeChannel = channelDefault;
 	}
 
 	if (typeof nick === 'undefined') { cmd_nick([, promptNick()]); }
+
+	// join channel based on URI
+	var channelName = window.location.pathname.substring(1);
+	if ((channelName = validChannelName(channelName))) {
+		channelNames.push(channelName);
+		localCache.activeChannel = channelName;
+	}
 }
 
 function socketidByChannelName(channelName) {
