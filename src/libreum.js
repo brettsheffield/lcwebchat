@@ -3,7 +3,7 @@
  *
  * this file is part of LIBREUM
  *
- * Copyright (c) 2017 Brett Sheffield <brett@gladserv.com>
+ * Copyright (c) 2017, 2019 Brett Sheffield <brett@gladserv.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -328,6 +328,7 @@ function cmd_help(args) {
 	writeSysMsg("  /topic channel topic        - set channel topic");
 	writeSysMsg("  /join channel               - join channel");
 	writeSysMsg("  /part [channel]             - leave active or specified channel");
+	writeSysMsg("  /random                     - join random channel");
 	writeSysMsg("  /reset                      - delete all local storage");
 	writeSysMsg("  /rtl                        - toggle right-to-left input");
 	writeSysMsg("  /who                        - list when users were last seen on channel");
@@ -397,6 +398,16 @@ function cmd_part(args) {
 		return true;
 	}
 	partChannel(channelName);
+	return true;
+}
+
+/* /random command - join random channel */
+function cmd_rand(args) {
+	var channel = validChannelName(uuidgen());
+
+	createChannel(channel);
+	localCache.activeChannel = channel;
+
 	return true;
 }
 
@@ -651,6 +662,8 @@ function handleCmd(cmd, isRemote) {
 		return cmd_nick(args);
 	case "part":
 		return cmd_part(args);
+	case "random":
+		return cmd_rand(args);
 	case "reset":
 		localStorage.clear();
 		break;
@@ -935,6 +948,14 @@ function updateChannelTopic(topic, socketid) {
 	if (typeof divtopic !== 'undefined') {
 		divtopic.html("<h1>" + topic + "</h1>");
 	}
+}
+
+function uuidgen() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,
+	function(c) {
+		return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
+	}
+  );
 }
 
 /* check channel name validity */
