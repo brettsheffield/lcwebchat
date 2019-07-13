@@ -2,6 +2,8 @@
 
 Basic web demo of chat over multicast using the librecast API.
 
+Live demo at: https://chat.librecast.net/ (type /help for commands)
+
 ```
  +--------------------+
  |     libreum        |
